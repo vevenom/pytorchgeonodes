@@ -262,6 +262,50 @@
   </div>
 </section>
 
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Search. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <!-- Interpolating. -->
+        <h3 class="title is-4">Joint discrete and continuous parameter optimization</h3>
+        <div class="content has-text-justified">
+          <p>At every iteration, our MCTS-based search algorithm first selects a set of shape parameters and object pose. These are then passed through the differentiable computational graph, parsed by our PyTorchGeoNodes framework for a shape program, that generates a 3D mesh based on the selected shape parameters. Then, we compute the loss that evaluates how well the shape fits the input scene. We further optimize the continuous parameters of our shape program using gradient descent and update the search tree based on this loss.</p>
+        </div>
+        <img src="./static/images/overview.png"
+                 class="interpolation-image"
+                 alt="Search overview image."/>
+
+        <div class="columns is-vcentered interpolation-panel">
+          <div class="column is-3 has-text-centered">
+            <img src="./static/images/interpolate_start.jpg"
+                 class="interpolation-image"
+                 alt="Initialization"/>
+            <p>Initialization</p>
+          </div>
+          <div class="column interpolation-video-column">
+            <div id="interpolation-image-wrapper">
+              Loading...
+            </div>
+            <input class="slider is-fullwidth is-large is-info"
+                   id="interpolation-slider"
+                   step="1" min="1" max="104" value="1" type="range">
+          </div>
+          <div class="column is-3 has-text-centered">
+            <img src="./static/images/interpolate_end.jpg"
+                 class="interpolation-image"
+                 alt="Final result"/>
+            <p class="is-bold">Final step</p>
+          </div>
+        </div>
+        <br/>
+        <!--/ Interpolating. -->
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!--    &lt;!&ndash; Paper video. &ndash;&gt;-->
 <!--    <div class="columns is-centered has-text-centered">-->
