@@ -21,24 +21,24 @@ function setInterpolationImage(i) {
 }
 
 // Example 1
-//var EXAMPLE1_BASE = "./static/interpolation/example1";
-//var NUM_EXAMPLE1_FRAMES = 20;
-//
-//var example1_images = [];
-//function preloadExample1Images() {
-//  for (var i = 0; i <= NUM_EXAMPLE1_FRAMES; i++) {
-//    var path = EXAMPLE1_BASE + '/visualization (' + String(i) + ').jpg';
-//    example1_images[i] = new Image();
-//    example1_images[i].src = path;
-//  }
-//}
-//
-//function setExample1Image(i) {
-//  var image = example1_images[i];
-//  image.ondragstart = function() { return false; };
-//  image.oncontextmenu = function() { return false; };
-//  $('#example1-image-wrapper').empty().append(image);
-//}
+var EXAMPLE1_BASE = "./static/interpolation/example1";
+var NUM_EXAMPLE1_FRAMES = 20;
+
+var example1_images = [];
+function preloadExample1Images() {
+  for (var i = 0; i <= NUM_EXAMPLE1_FRAMES; i++) {
+    var path = EXAMPLE1_BASE + '/visualization (' + String(i) + ').jpg';
+    example1_images[i] = new Image();
+    example1_images[i].src = path;
+  }
+}
+
+function setExample1Image(i) {
+  var image = example1_images[i];
+  image.ondragstart = function() { return false; };
+  image.oncontextmenu = function() { return false; };
+  $('#example1-image-wrapper').empty().append(image);
+}
 
 
 
