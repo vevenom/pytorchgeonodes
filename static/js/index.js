@@ -1,5 +1,6 @@
 window.HELP_IMPROVE_VIDEOJS = false;
 
+// Interpolation
 var INTERP_BASE = "./static/interpolation/stacked_new";
 var NUM_INTERP_FRAMES = 104;
 
@@ -19,6 +20,7 @@ function setInterpolationImage(i) {
   $('#interpolation-image-wrapper').empty().append(image);
 }
 
+// Example 1
 var EXAMPLE1_BASE = "./static/interpolation/example1";
 var NUM_INTERP_FRAMES = 20;
 
@@ -35,7 +37,7 @@ function setExample1Image(i) {
   var image = example1_images[i];
   image.ondragstart = function() { return false; };
   image.oncontextmenu = function() { return false; };
-  $('#interpolation-image-wrapper').empty().append(image);
+  $('#example1-image-wrapper').empty().append(image);
 }
 
 
