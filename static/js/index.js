@@ -80,7 +80,25 @@ function setExample3Image(i) {
   $('#example3-image-wrapper').empty().append(image);
 }
 
+// Example 4
+var EXAMPLE4_BASE = "./static/interpolation/example4";
+var NUM_EXAMPLE4_FRAMES = 24;
 
+var example4_images = [];
+function preloadExample4Images() {
+  for (var i = 0; i <= NUM_EXAMPLE4_FRAMES; i++) {
+    var path = EXAMPLE4_BASE + '/visualization (' + String(i) + ').jpg';
+    example4_images[i] = new Image();
+    example4_images[i].src = path;
+  }
+}
+
+function setExample4Image(i) {
+  var image = example4_images[i];
+  image.ondragstart = function() { return false; };
+  image.oncontextmenu = function() { return false; };
+  $('#example4-image-wrapper').empty().append(image);
+}
 
 $(document).ready(function() {
     // Check for click events on the navbar burger icon
@@ -92,8 +110,8 @@ $(document).ready(function() {
     });
 
     var options = {
-			slidesToScroll: 3,
-			slidesToShow: 3,
+			slidesToScroll: 4,
+			slidesToShow: 4,
 			loop: true,
 			infinite: true,
 			autoplay: false,
@@ -156,6 +174,13 @@ $(document).ready(function() {
     });
     setExample3Image(0);
     $('#example3-slider').prop('max', NUM_EXAMPLE3_FRAMES);
+
+    preloadExample4Images();
+    $('#example4-slider').on('input', function(event) {
+      setExample4Image(this.value);
+    });
+    setExample4Image(0);
+    $('#example4-slider').prop('max', NUM_EXAMPLE4_FRAMES);
 
     bulmaSlider.attach();
 
