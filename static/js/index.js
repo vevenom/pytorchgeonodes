@@ -96,12 +96,12 @@ $(document).ready(function() {
     $('#interpolation-slider').prop('max', NUM_INTERP_FRAMES);
 
 
-//    preloadExample1Images();
-//    $('#example1-slider').on('input', function(event) {
-//      setExample1Image(this.value);
-//    });
-//    setExample1Image(0);
-//    $('#interpolation-slider').prop('max', NUM_EXAMPLE1_FRAMES);
+    preloadExample1Images();
+    $('#example1-slider').on('input', function(event) {
+      setExample1Image(this.value);
+    });
+    setExample1Image(0);
+    $('#interpolation-slider').prop('max', NUM_EXAMPLE1_FRAMES);
 
     bulmaSlider.attach();
 
