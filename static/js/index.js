@@ -93,6 +93,8 @@ $(document).ready(function() {
     setInterpolationImage(0);
     $('#interpolation-slider').prop('max', NUM_INTERP_FRAMES);
 
+
+    preloadExample1Images();
     $('#example1-slider').on('input', function(event) {
       setExample1Image(this.value);
     });
