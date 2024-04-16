@@ -5,7 +5,7 @@ var NUM_INTERP_FRAMES = 104;
 
 var interp_images = [];
 function preloadInterpolationImages() {
-  for (var i = 1; i <= NUM_INTERP_FRAMES; i++) {
+  for (var i = 0; i <= NUM_INTERP_FRAMES; i++) {
     var path = INTERP_BASE + '/interpolate (' + String(i) + ').jpg';
     interp_images[i] = new Image();
     interp_images[i].src = path;
@@ -70,8 +70,8 @@ $(document).ready(function() {
     $('#interpolation-slider').on('input', function(event) {
       setInterpolationImage(this.value);
     });
-    setInterpolationImage(1);
-    $('#interpolation-slider').prop('max', NUM_INTERP_FRAMES - 1);
+    setInterpolationImage(0);
+    $('#interpolation-slider').prop('max', NUM_INTERP_FRAMES);
 
     bulmaSlider.attach();
 
