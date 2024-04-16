@@ -248,32 +248,9 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            We present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
+            We propose PyTorchGeoNodes, a differentiable module for reconstructing 3D objects from images using interpretable shape programs. In comparison to traditional CAD model retrieval methods, the use of shape programs for 3D reconstruction allows for reasoning about the semantic properties of reconstructed objects, editing, low memory footprint, etc. However, the utilization of shape programs for 3D scene understanding has been largely neglected in past works. As our main contribution, we enable gradient-based optimization by introducing a module that translates shape programs designed in Blender, for example, into efficient PyTorch code. We also provide a method that relies on PyTorchGeoNodes and is inspired by Monte Carlo Tree Search (MCTS) to jointly optimize discrete and continuous parameters of shape programs and reconstruct 3D objects for input scenes. In our experiments, we apply our algorithm to reconstruct 3D objects in the ScanNet dataset and evaluate our results against CAD model retrieval-based reconstructions. Our experiments indicate that our reconstructions match well the input scenes while enabling semantic reasoning about reconstructed objects.
           </p>
-          <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
-          </p>
-          <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
-          </p>
+
         </div>
       </div>
     </div>
