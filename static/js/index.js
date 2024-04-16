@@ -40,6 +40,25 @@ function setExample1Image(i) {
   $('#example1-image-wrapper').empty().append(image);
 }
 
+// Example 2
+var EXAMPLE2_BASE = "./static/interpolation/example2";
+var NUM_EXAMPLE2_FRAMES = 47;
+
+var example2_images = [];
+function preloadExample2Images() {
+  for (var i = 0; i <= NUM_EXAMPLE2_FRAMES; i++) {
+    var path = EXAMPLE2_BASE + '/visualization (' + String(i) + ').jpg';
+    example2_images[i] = new Image();
+    example2_images[i].src = path;
+  }
+}
+
+function setExample2Image(i) {
+  var image = example2_images[i];
+  image.ondragstart = function() { return false; };
+  image.oncontextmenu = function() { return false; };
+  $('#example2-image-wrapper').empty().append(image);
+}
 
 
 $(document).ready(function() {
@@ -52,7 +71,7 @@ $(document).ready(function() {
     });
 
     var options = {
-			slidesToScroll: 2,
+			slidesToScroll: 3,
 			slidesToShow: 3,
 			loop: true,
 			infinite: true,
@@ -102,6 +121,13 @@ $(document).ready(function() {
     });
     setExample1Image(0);
     $('#example1-slider').prop('max', NUM_EXAMPLE1_FRAMES);
+
+    preloadExample2Images();
+    $('#example2-slider').on('input', function(event) {
+      setExample2Image(this.value);
+    });
+    setExample2Image(0);
+    $('#example2-slider').prop('max', NUM_EXAMPLE2_FRAMES);
 
     bulmaSlider.attach();
 
