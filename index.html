@@ -212,12 +212,53 @@
       <div class="column is-four-fifths">
         <h2 class="title is-3">From Blender to PyTorchGeoNodes</h2>
         <div class="content has-text-justified">
+          <p> Our framework provides different computational nodes that reimplement the functionalities of the individual geometry nodes in Blender. More exactly, for every node type in Blender, we implement a corresponding node type with the same functionalities using PyTorch, or PyTorch3D in case of geometric operations.</p>
           <img src="./static/images/blender2pytorchgeonodes.png"
                  class="interpolation-image"
                  alt="blender2pytorchgeonodes image."/>
-            <p> Our framework provides different computational nodes that reimplement the functionalities of the individual geometry nodes in Blender. More exactly, for every node type in Blender, we implement a corresponding node type with the same functionalities using PyTorch, or PyTorch3D in case of geometric operations. In the visualization above we show the computational graph designed and visualized in Blender using Geometry Nodes feature. Underneath, we show how we abstract the different nodes using PyTorch tensors and PyTorch3D meshes. The input node takes input parameters, here \{Width: 0.5, Dividing Board Thickness: 0.04, Height: 0.6, Number of Dividing Boards: 5, Board Thickness: 0.04\} and feeds them to a series of operations.  The blue nodes are arithmetic and concatenation nodes, which transform input parameters and feed the results to geometry nodes, in green. In this example, we generate a cuboid mesh and instantiate a line of points which generates the final geometry for dividing boards. In practice, this shape program is part of a larger shape program for modeling cabinets.</p>
+            <p>In the visualization above we show the computational graph designed and visualized in Blender using Geometry Nodes feature. Underneath, we show how we abstract the different nodes using PyTorch tensors and PyTorch3D meshes. The input node takes input parameters, here \{Width: 0.5, Dividing Board Thickness: 0.04, Height: 0.6, Number of Dividing Boards: 5, Board Thickness: 0.04\} and feeds them to a series of operations.  The blue nodes are arithmetic and concatenation nodes, which transform input parameters and feed the results to geometry nodes, in green. In this example, we generate a cuboid mesh and instantiate a line of points which generates the final geometry for dividing boards. In practice, this shape program is part of a larger shape program for modeling cabinets.</p>
         </div>
       </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Animation. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <!-- Interpolating. -->
+        <h3 class="title is-4">Interpolating states</h3>
+        <div class="content has-text-justified">
+          <p>The computational graph is designed and visualized in Blender using Geometry Nodes feature. Underneath, we show how we abstract the different nodes using PyTorch tensors and PyTorch3D meshes. The input node takes input parameters, here {Width: 0.5, Dividing Board Thickness: 0.04, Height: 0.6, Number of Dividing Boards: 5, Board Thickness: 0.04 } and feeds them to a series of operations.  The blue nodes are arithmetic and concatenation nodes, which transform input parameters and feed the results to geometry nodes, in green. In this example, we generate a cuboid mesh and instantiate a line of points which generates the final geometry for dividing boards. In practice, this shape program is part of a larger shape program for modeling cabinets.</p>
+        </div>
+        <div class="columns is-vcentered interpolation-panel">
+          <div class="column is-3 has-text-centered">
+            <img src="./static/images/interpolate_start.jpg"
+                 class="interpolation-image"
+                 alt="Initialization"/>
+            <p>First Iteration</p>
+          </div>
+          <div class="column interpolation-video-column">
+            <div id="interpolation-image-wrapper">
+              Loading...
+            </div>
+            <input class="slider is-fullwidth is-large is-info"
+                   id="interpolation-slider"
+                   step="1" min="0" max="100" value="0" type="range">
+          </div>
+          <div class="column is-3 has-text-centered">
+            <img src="./static/images/interpolate_end.jpg"
+                 class="interpolation-image"
+                 alt="Final result"/>
+            <p class="is-bold">Last Iteration</p>
+          </div>
+        </div>
+        <br/>
+        <!--/ Interpolating. -->
+      </div>
+    </div>
   </div>
 </section>
 
