@@ -19,6 +19,26 @@ function setInterpolationImage(i) {
   $('#interpolation-image-wrapper').empty().append(image);
 }
 
+var EXAMPLE1_BASE = "./static/interpolation/example1";
+var NUM_INTERP_FRAMES = 20;
+
+var example1_images = [];
+function preloadExample1Images() {
+  for (var i = 0; i <= NUM_INTERP_FRAMES; i++) {
+    var path = EXAMPLE1_BASE + '/visualization (' + String(i) + ').jpg';
+    example1_images[i] = new Image();
+    example1_images[i].src = path;
+  }
+}
+
+function setExample1Image(i) {
+  var image = example1_images[i];
+  image.ondragstart = function() { return false; };
+  image.oncontextmenu = function() { return false; };
+  $('#interpolation-image-wrapper').empty().append(image);
+}
+
+
 
 $(document).ready(function() {
     // Check for click events on the navbar burger icon
@@ -72,6 +92,12 @@ $(document).ready(function() {
     });
     setInterpolationImage(0);
     $('#interpolation-slider').prop('max', NUM_INTERP_FRAMES);
+
+    $('#example1-slider').on('input', function(event) {
+      setExample1Image(this.value);
+    });
+    setExample1Image(0);
+    $('#interpolation-slider').prop('max', NUM_EXAMPLE1_FRAMES);
 
     bulmaSlider.attach();
 
