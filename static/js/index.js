@@ -101,7 +101,7 @@ $(document).ready(function() {
       setExample1Image(this.value);
     });
     setExample1Image(0);
-    $('#interpolation-slider').prop('max', NUM_EXAMPLE1_FRAMES);
+    $('#example1-slider').prop('max', NUM_EXAMPLE1_FRAMES);
 
     bulmaSlider.attach();
 
