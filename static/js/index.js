@@ -22,11 +22,11 @@ function setInterpolationImage(i) {
 
 // Example 1
 var EXAMPLE1_BASE = "./static/interpolation/example1";
-var NUM_INTERP_FRAMES = 20;
+var NUM_EXAMPLE1_FRAMES = 20;
 
 var example1_images = [];
 function preloadExample1Images() {
-  for (var i = 0; i <= NUM_INTERP_FRAMES; i++) {
+  for (var i = 0; i <= NUM_EXAMPLE1_FRAMES; i++) {
     var path = EXAMPLE1_BASE + '/visualization (' + String(i) + ').jpg';
     example1_images[i] = new Image();
     example1_images[i].src = path;
