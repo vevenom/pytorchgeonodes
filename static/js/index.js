@@ -42,7 +42,7 @@ function setExample1Image(i) {
 
 // Example 2
 var EXAMPLE2_BASE = "./static/interpolation/example2";
-var NUM_EXAMPLE2_FRAMES = 47;
+var NUM_EXAMPLE2_FRAMES = 12;
 
 var example2_images = [];
 function preloadExample2Images() {
