@@ -1,0 +1,91 @@
+{
+  "class_name" : "bed",
+  "blend_path" : "./ShapeProgramsDataset/bed.blend",
+  "params" : {
+    "Base": {
+      "type": "nested",
+      "params": {
+        "Width": {
+          "type": "float",
+          "range": [
+            0.9,
+            2.4
+          ]
+        },
+        "Depth": {
+          "type": "float",
+          "range": [
+            1.5,
+            2.3
+          ]
+        }
+      }
+    },
+    "Back": {
+        "type": "nested",
+        "params": {
+          "Has Back": {
+            "type": "bool"
+          },
+          "Back Height Offset": {
+            "type": "float",
+            "range": [
+              0.2,
+              0.6
+            ],
+            "or_dependcies": ["Has Back"]
+          },
+          "Back Thickness": {
+            "type": "float",
+            "range": [
+              0.05,
+              0.2
+            ],
+            "or_dependcies": ["Has Back"]
+          }
+        }
+    },
+    "Legs": {
+      "type": "nested",
+      "params": {
+        "Has Legs": {
+          "type": "bool"
+        },
+        "Legs Size": {
+          "type": "float",
+          "range": [
+            0.05,
+            0.3
+          ],
+          "or_dependcies": ["Has Legs"]
+        },
+        "Legs Height": {
+          "type": "float",
+          "range": [
+            0.05,
+            0.2
+          ],
+          "or_dependcies": ["Has Legs"]
+        }
+      }
+    },
+    "Floor": {
+      "type": "nested",
+      "params": {
+        "Add Floor": {
+          "type": "bool"
+        },
+        "Second Bed Height": {
+          "type": "float",
+          "range": [
+            0.6,
+            1.0
+          ],
+          "or_dependcies": [
+            "Add Floor"
+          ]
+        }
+      }
+    }
+  }
+}

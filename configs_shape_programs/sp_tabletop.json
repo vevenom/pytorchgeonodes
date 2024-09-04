@@ -1,0 +1,95 @@
+{
+  "class_name" : "table",
+  "blend_path" : "./ShapeProgramsUnitTestDataset/tabletop.blend",
+  "params" : {
+    "Base": {
+      "type": "nested",
+      "params": {
+        "Width": {
+          "type": "float",
+          "range": [
+            0.4,
+            2.0
+          ]
+        },
+        "Height": {
+          "type": "float",
+          "range": [
+            0.4,
+            1.0
+          ]
+        },
+        "Depth": {
+          "type": "float",
+          "range": [
+            0.4,
+            1.5
+          ]
+        }
+      }
+    },
+    "Top": {
+      "type": "nested",
+      "params": {
+        "Top Shape": {
+         "type": "int",
+            "range": [
+              0,
+              2
+            ]
+        },
+        "Top Thickness": {
+            "type": "float",
+            "range": [
+              0.04,
+              0.1
+            ]
+          }
+      }
+    },
+    "Legs": {
+      "type": "nested",
+      "params": {
+        "Legs Type": {
+         "type": "int",
+            "range": [
+              0,
+              3
+            ]
+        },
+        "Mid Leg X Scale": {
+              "type": "float",
+              "range": [
+                  0.05,
+                  1.0
+              ],
+              "or_dependencies": [["Legs Type", 0]]
+              },
+        "Mid Leg Y Scale": {
+            "type": "float",
+            "range": [
+                0.05,
+                1.0
+            ],
+            "or_dependencies": [["Legs Type", 0]]
+        }
+      }
+    },
+    "Mid Board": {
+      "type": "nested",
+      "params": {
+        "Has Mid Board": {
+         "type": "bool"
+        },
+        "Mid Board Z Scale": {
+            "type": "float",
+            "range": [
+                0.05,
+                0.5
+            ],
+            "or_dependencies": ["Has Mid Board"]
+        }
+      }
+    }
+  }
+}

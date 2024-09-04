@@ -1,0 +1,10 @@
+demo*
+demo_optimize_pytorch_geometry_nodes
+demo_optimize_pytorch_geometry_nodes1
+demo_optimize_pytorch_geometry_nodes2
+processed_data
+synthetic_dataset
+output*
+.idea
+*__pycache__/*
+*.pyc

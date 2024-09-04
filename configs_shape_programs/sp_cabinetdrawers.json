@@ -1,0 +1,56 @@
+{
+  "class_name" : "cabinet",
+  "blend_path" : "./ShapeProgramsUnitTestDataset/cabinetdrawers.blend",
+  "params" : {
+    "Base": {
+      "type": "nested",
+      "params" : {
+        "Width" : {
+          "type" : "float",
+          "range" : [0.5, 4.0]
+        },
+        "Height" : {
+          "type" : "float",
+          "range" : [0.5, 1.5]
+        },
+        "Depth" : {
+          "type" : "float",
+          "range" : [0.1, 1.5]
+        },
+        "Board Thickness" : {
+          "type" : "float",
+          "range" : [0.01, 0.09]
+        },
+        "Has Back" : {
+          "type" : "bool"
+        },
+        "Has Legs" : {
+          "type" : "bool"
+        }
+      }
+    },
+    "Dividing Boards" :
+    {
+      "type" : "nested",
+      "params" : {
+        "Number of Dividing Boards": {
+          "type": "int",
+          "range": [
+            2,
+            10
+          ]
+        },
+        "Dividing Board Thickness": {
+          "type": "float",
+          "range": [
+            0.01,
+            0.05
+          ]
+        }
+      }
+    },
+    "Has Drawers" : {
+      "type" : "bool"
+    }
+  }
+}

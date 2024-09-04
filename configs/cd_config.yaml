@@ -1,0 +1,11 @@
+num_loops: 10
+load_ordered_dv: True
+refinement:
+    use_refinement: True
+    optimize_threshold: 0.0   # This gets replaced anyways
+    refine_during_sim: False
+    optimize_steps: 50
+    optimizer_lr: 0.005
+    final_optimization_steps: 0
+    max_refinement_steps: 49 # stop refining after node has been refined this many times
+    lock_after_max_refinement_steps: True

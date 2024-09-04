@@ -1,0 +1,72 @@
+{
+  "class_name" : "bookshelf",
+  "blend_path" : "./ShapeProgramsDataset/cabinet.blend",
+  "params" : {
+    "Base": {
+      "type": "nested",
+      "params" : {
+        "Width" : {
+          "type" : "float",
+          "range" : [0.3, 2.0]
+        },
+        "Height" : {
+          "type" : "float",
+          "range" : [0.3, 2.5]
+        },
+        "Depth" : {
+          "type" : "float",
+          "range" : [0.1, 0.6]
+        },
+        "Board Thickness" : {
+          "type" : "float",
+          "range" : [0.01, 0.09]
+        },
+        "Has Back" : {
+          "type" : "bool"
+        },
+        "Has Legs" : {
+          "type" : "bool"
+        },
+        "Leg Width" : {
+          "type" : "float",
+          "range" : [0.03, 0.1],
+          "or_dependencies": ["Has Legs"]
+        },
+        "Leg Height" : {
+          "type" : "float",
+          "range" : [0.03, 0.1],
+          "or_dependencies": ["Has Legs"]
+        },
+        "Leg Depth" : {
+          "type": "float",
+          "range": [0.03, 0.1],
+          "or_dependencies": ["Has Legs"]
+        }
+      }
+    },
+    "Dividing Boards" :
+    {
+      "type" : "nested",
+      "params" : {
+        "Number of Dividing Boards": {
+          "type": "int",
+          "range": [
+            2,
+            6
+          ],
+          "not_dependencies": ["Has Drawers"]
+        },
+        "Dividing Board Thickness": {
+          "type": "float",
+          "range": [
+            0.01,
+            0.05
+          ]
+        }
+      }
+    },
+    "Has Drawers" : {
+      "type" : "bool"
+    }
+  }
+}

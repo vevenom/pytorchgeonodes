@@ -1,0 +1,26 @@
+name: pytorchgeonodes
+channels:
+  - pytorch3d
+  - anaconda
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy=1.26.4=py310h5f9d8c6_0
+  - pip=24.0=py310h06a4308_0
+  - python=3.10.12=h955ad1f_0
+  - python-graphviz=0.20.1=py310h06a4308_0
+  - pytorch=1.13.0=py3.10_cuda11.6_cudnn8.3.2_0
+  - pytorch3d=0.7.5=py310_cu116_pyt1130
+  - torchvision=0.14.0=py310_cu116
+  - pip:
+    - bpy==4.0.0
+    - dill==0.3.8
+    - kornia==0.6.0
+    - matplotlib==3.9.1
+    - open3d==0.18.0
+    - opencv-python==4.10.0.84
+    - ordered-set==4.1.0
+
+

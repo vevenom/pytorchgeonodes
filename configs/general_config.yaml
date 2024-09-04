@@ -1,0 +1,2 @@
+processed_data_path: './processed_data'
+cd_config_path: './configs/cd_config.yaml'
