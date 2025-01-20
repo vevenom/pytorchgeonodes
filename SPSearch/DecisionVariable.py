@@ -10,11 +10,57 @@ from pytorch3d.structures import Meshes
 
 from PytorchGeoNodes.ShapeParamsTree.ShapeParamsTree import ShapeParamsTree
 
+class DecisionValuePriors:
+    def __init__(self, bbox_size_mean, bbox_size_std):
+        self.bbox_size_mean = bbox_size_mean
+        self.bbox_size_cov = bbox_size_std
 
-class DecisionValue(object):
+    def compute_prior_distribution_from_pcd(self, target_pcd, epsilon=1e-3):
+        assert target_pcd.shape[0] == 1
+
+        target_bb_min = target_pcd.min(dim=1)[0]
+        target_bb_max = target_pcd.max(dim=1)[0]
+        target_bb_size = torch.abs(target_bb_max - target_bb_min)
+
+        gaussian_distr = (
+            torch.distributions.multivariate_normal.MultivariateNormal(self.bbox_size_mean, self.bbox_size_cov))
+        prior_distribution = torch.exp(gaussian_distr.log_prob(target_bb_size))
+
+        prior_distribution = prior_distribution / prior_distribution.sum()
+
+        return prior_distribution
+
+        # mean_dist = (target_bb_size - self.bbox_size_mean)
+        # pdf_value = torch.bmm(mean_dist[:, None], torch.linalg.inv(self.bbox_size_cov))
+        # pdf_value = torch.bmm(pdf_value, mean_dist[..., None])
+        # pdf_value = torch.exp(-0.5 * pdf_value)[:,0,0]
+
+        # pdf_constant = (
+        #         1.0 / ((2 * np.pi) ** (3 / 2.0) * torch.linalg.det(self.bbox_size_cov)) ** 0.5)
+        # pdf_value = pdf_constant * torch.exp(pdf_value)[:,0,0]
+
+        # pdf_value =  pdf_value[:, 0, 0]
+
+        # print(pdf_value)
+        #
+        # # prior_distribution = torch.exp(pdf_value) / torch.sum(torch.exp(pdf_value + epsilon))
+        # prior_distribution = torch.nn.functional.softmax(pdf_value, dim=0)
+        #
+        # return prior_distribution
+
+class DecisionValue(torch.nn.Module):
     def __init__(self, dv_name, value):
+        super().__init__()
         self.dv_name = dv_name
         self.value = value
+
+        # MCTS
+        self.max_score = -np.inf
+        self.visits = 0
+        self.min_score = np.inf
+        self.score_sum = 0
+        self.mov_avg = None
+        self.avg_decay = 0.9
 
     def __str__(self):
         # return "DecisionValue: {0} visited {1} times".format(self.value, self.visits)
@@ -23,12 +69,41 @@ class DecisionValue(object):
     def get_value(self):
         return self.value
 
+    # MCTS
+    def get_score(self, mode):
+        if mode == 'AVG':
+            return self.score_sum / float(self.visits) if self.visits > 0 else -np.inf
+        elif mode == 'MAX':
+            return self.max_score
+        elif mode == 'MIN':
+            return self.min_score
+        elif mode == 'MOV_AVG':
+            return self.mov_avg
+        else:
+            raise Exception("Unknown mode {0}".format(mode))
 
-class DecisionVariable(object):
+    def get_visits(self):
+        return self.visits
+
+    def update(self, score, n_visits):
+        if score > self.max_score:
+            self.max_score = score
+        if score < self.min_score:
+            self.min_score = score
+        self.score_sum += score
+        self.visits += n_visits
+
+        if self.mov_avg is None:
+            self.mov_avg = score
+        else:
+            self.mov_avg = self.avg_decay * self.mov_avg + (1 - self.avg_decay) * score
+
+class DecisionVariable(torch.nn.Module):
     def __init__(self, name, valid_range=None, or_dependencies=None, not_dependencies=None,
                  add_value=False, normalized_values=False):
+        super().__init__()
         self.name = name
-        self.values = None  # torch.tensor([])
+        self.values = None
 
         self.valid_range = valid_range
 
@@ -38,6 +113,8 @@ class DecisionVariable(object):
         self.add_value = add_value
 
         self.normalized_values = normalized_values
+
+        self.prior = None # type: DecisionValuePriors
 
     def __str__(self):
         return "DecisionVariable: {0} = {1}".format(self.name, self.values)
@@ -59,11 +136,19 @@ class DecisionVariable(object):
         if self.normalized_values:
             # values are in [-1, 1] range
             value = (value + 1) / 2.0 * (self.valid_range[1] - self.valid_range[0]) + self.valid_range[0]
+
         return value
+
+    def share_memory_(self):
+        for value in self.values:
+            value.value.share_memory_()
+
+    def set_prior(self, prior):
+        self.prior = prior
 
     @staticmethod
     def generate_dec_vars_from_params_tree(params_tree: ShapeParamsTree, device,
-                                           step_size=0.1, cluster_num=4,
+                                           step_size=0.2, cluster_num=4,
                                            normalize_params=True, add_rotation_nodes=True):
 
         dec_vars = []
@@ -71,8 +156,11 @@ class DecisionVariable(object):
 
         if add_rotation_nodes:
             # rotation_y = torch.tensor([0.0, np.pi * 0.5, np.pi, np.pi * 1.5], device=device)
+            # rotation_y = torch.tensor(
+            #     [0.0, np.pi * 0.25, np.pi * 0.5, np.pi * 0.75, np.pi, np.pi * 1.25, np.pi * 1.5], device=device)
+
             rotation_y = torch.tensor(
-                [0.0, np.pi * 0.25, np.pi * 0.5, np.pi * 0.75, np.pi, np.pi * 1.25, np.pi * 1.5], device=device)
+                [0.0, np.pi * 0.5, np.pi, np.pi * 1.5], device=device)
 
 
             dv_rot = RotationDecisionVariable('OBJ_Rotation', valid_range=[-np.pi / 4, 2 * np.pi],
@@ -98,11 +186,15 @@ class DecisionVariable(object):
 
                 # create values for decision variable based on the valid range and linspace steps
                 # step_size = 0.05
-                values_torch = (
-                    torch.tensor(np.arange(valid_range[0] + step_size / 2,
-                                           valid_range[1] - step_size / 2 + 1e-4, step_size),
-                                            dtype=torch.float32, device=device))
+                # values_torch = (
+                #     torch.tensor(np.arange(valid_range[0] + step_size / 2,
+                #                            valid_range[1] - step_size / 2 + 1e-4, step_size),
+                #                             dtype=torch.float32, device=device))
 
+                values_torch = (
+                    torch.tensor(np.arange(valid_range[0],
+                                           valid_range[1] + 1e-4, step_size),
+                                 dtype=torch.float32, device=device))
 
                 dec_var = DecisionVariable(param_name,  valid_range=valid_range,
                                            or_dependencies=or_dependencies, not_dependencies=not_dependencies,
@@ -146,7 +238,7 @@ class DecisionVariable(object):
 
     @staticmethod
     @torch.no_grad()
-    def order_dv_based_on_geometry_variance(
+    def preprocess_dv(
             sp_tree, decision_variables_list, geometry_nodes, init_shapes_n=100):
         """
         Order decision variables based on variance of geometry nodes
@@ -178,6 +270,7 @@ class DecisionVariable(object):
 
             # chamfer_dists = torch.zeros(len(dv.values), device=device)
             chamfer_dists = torch.zeros((len(init_input_params_dict_list), len(dv.values)), device=device)
+            bbox_sizes = torch.zeros((len(init_input_params_dict_list), len(dv.values), 3), device=device)
 
             if len(dv.values) == 1:
                 dv_variance_list.append(0)
@@ -194,6 +287,7 @@ class DecisionVariable(object):
                 # get initial mesh
                 _, outputs = geometry_nodes.forward(input_params_dict, transform2blender_coords=True)
                 init_obj_mesh = outputs[0][0][0]
+                init_obj_mesh = Meshes(verts=init_obj_mesh.verts, faces=init_obj_mesh.faces)
 
                 # get initial points and normals
                 init_pcd, init_normals = (
@@ -203,10 +297,11 @@ class DecisionVariable(object):
                 for value_ind, value in enumerate(dv.values):
 
                     if not isinstance(dv, RotationDecisionVariable):
-                        input_params_dict[dv.name] = value.value
+                        input_params_dict[dv.name] = dv.convert_value(value)
 
                     _, outputs = geometry_nodes.forward(input_params_dict, transform2blender_coords=True)
                     obj_mesh = outputs[0][0][0]
+                    obj_mesh = Meshes(verts=obj_mesh.verts, faces=obj_mesh.faces)
 
                     if isinstance(dv, RotationDecisionVariable):
                         verts = obj_mesh.verts_packed()
@@ -228,12 +323,31 @@ class DecisionVariable(object):
 
                     chamfer_dists[shape_ind][value_ind] = cd_points
 
+                    mesh_bb = obj_mesh.get_bounding_boxes()  # (N, 3, 2)
+                    mesh_size = torch.abs(mesh_bb[0,:,1] - mesh_bb[0,:,0])
+                    bbox_sizes[shape_ind][value_ind] = mesh_size
+
             dv_variance_list.append(
                 ((chamfer_dists - chamfer_dists.mean(dim=1, keepdims=True)) ** 2).sum(dim=1).mean().item()
             )
 
+            bbox_mean = bbox_sizes.mean(dim=[0])
+            diffs = (bbox_sizes - bbox_mean[None]).reshape(-1, 3)
+            bbox_cov = torch.bmm(diffs.unsqueeze(2), diffs.unsqueeze(1)).reshape(init_shapes_n, len(dv.values), 3, 3)
+            bbox_cov = bbox_cov.sum(dim=0) / (len(dv.values) - 1)
+
+            # Add small value to variance to ensure it is positive definite
+            bbox_cov[:, 0, 0] += 1e-1
+            bbox_cov[:, 1, 1] += 1e-1
+            bbox_cov[:, 2, 2] += 1e-1
+            # print("Bbox mean:", bbox_mean)
+            # print("Bbox cov:", bbox_cov)
+
+            prior = DecisionValuePriors(bbox_mean, bbox_cov)
+            dv.set_prior(prior)
+
         for dv_ind, dv in enumerate(decision_variables_list):
-            print(dv.name, dv_variance_list[dv_ind])
+            print(dv.name, "CD variance", dv_variance_list[dv_ind])
 
         # Sort decision variables based on variance
         decision_variables_list = [

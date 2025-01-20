@@ -80,6 +80,8 @@ phong_renderer = MeshRenderer(
 optim = torch.optim.Adam(list(input_params_dict.values()))
 
 def loss_fn(pred_mesh, non_diff_py3d_mesh, R, T, get_image=False):
+    pred_mesh = pred_mesh.to_mesh()
+
     pred_image = silhouette_renderer(meshes_world=pred_mesh, R=R, T=T)
 
     gt_image = silhouette_renderer(meshes_world=non_diff_py3d_mesh, R=R, T=T)

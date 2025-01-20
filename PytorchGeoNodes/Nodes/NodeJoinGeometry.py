@@ -1,21 +1,19 @@
 
-from pytorch3d.structures import Meshes, join_meshes_as_scene, join_meshes_as_batch
-from pytorch3d.transforms import Rotate, Translate, Scale
-
 from PytorchGeoNodes.Nodes.Node import *
+from PytorchGeoNodes.Nodes.PrimitiveMesh import PrimitiveMesh, join_meshes
 
 class NodeJoinGeometryStrings:
     Geometry_str = 'Geometry'
 
 class NodeJoinGeometry(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Join Geometry node merges separately generated geometries into a single one. If the geometry inputs contain
          different types of data, the output will also contain different data types.
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
         print('Creating NodeJoinGeometry')
         self.__type__ = 'NodeJoinGeometry'
 
@@ -45,21 +43,19 @@ class NodeJoinGeometry(Node):
                                           NodeJoinGeometryStrings.Geometry_str]:
                 inputs_dict[self.name][NodeStrings.IN_str +
                                        NodeJoinGeometryStrings.Geometry_str] = \
-                    [[v] for v in inputs_dict[from_node.name][NodeStrings.OUT_str + from_socket.identifier]
-                     if v.verts_packed().shape[0] > 0]
+                    [[v] for v in inputs_dict[from_node.name][NodeStrings.OUT_str + from_socket.identifier]]
             else:
                 for i, v in enumerate(inputs_dict[from_node.name][NodeStrings.OUT_str +
                                                                   from_socket.identifier]):
-                    if v.verts_packed().shape[0] > 0:
-                        inputs_dict[self.name][NodeStrings.IN_str +
-                                               NodeJoinGeometryStrings.Geometry_str][i].append(v)
+                    inputs_dict[self.name][NodeStrings.IN_str +
+                                           NodeJoinGeometryStrings.Geometry_str][i].append(v)
 
         inputs_dict[self.name][NodeStrings.OUT_str +
                                NodeJoinGeometryStrings.Geometry_str] = []
         for i, v in enumerate(inputs_dict[self.name][NodeStrings.IN_str +
                                                      NodeJoinGeometryStrings.Geometry_str]):
             inputs_dict[self.name][NodeStrings.OUT_str +
-                                   NodeJoinGeometryStrings.Geometry_str].append(join_meshes_as_batch(v))
+                                   NodeJoinGeometryStrings.Geometry_str].append(join_meshes(v))
 
         if not len(self.in_edges):
             self.cached_output = {NodeStrings.OUT_str +

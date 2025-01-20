@@ -36,6 +36,14 @@
             0.1
           ],
           "or_dependencies": ["Has Legs"]
+        },
+        "Leg Height": {
+          "type": "float",
+          "range": [
+            0.01,
+            0.2
+          ],
+          "or_dependencies": ["Has Legs"]
         }
       }
     },
@@ -59,7 +67,7 @@
         "Arm Height": {
           "type": "float",
           "range": [
-            0.5,
+            0.2,
             0.8
           ],
           "or_dependencies": ["Has Left Arm", "Has Right Arm"]
@@ -88,7 +96,7 @@
           "type": "float",
           "range": [
             0.3,
-            0.7
+            0.701
           ],
           "or_dependencies": ["Has Back"]
         },
@@ -97,6 +105,14 @@
           "range": [
             0.05,
             0.3
+          ],
+          "or_dependencies": ["Has Back"]
+        },
+        "Back Over-Width Scale": {
+          "type": "float",
+          "range": [
+            0.0,
+            1.0
           ],
           "or_dependencies": ["Has Back"]
         }
@@ -119,7 +135,7 @@
         "L Depth": {
           "type": "float",
           "range": [
-            0.3,
+            0.5,
             1.0
           ],
           "or_dependencies": ["Is L-Shaped"]

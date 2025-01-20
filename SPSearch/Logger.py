@@ -4,8 +4,6 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from SPSearch.Proposal.Prop import Proposal
-
 
 class Logger(ABC):
     """

@@ -1,13 +1,11 @@
-import bpy
 import torch
 import numpy as np
 import copy
 
-from pytorch3d.structures import Meshes
 from pytorch3d.transforms import Rotate, Translate, Scale, Transform3d, euler_angles_to_matrix
 
 from PytorchGeoNodes.Nodes.Node import *
-
+from PytorchGeoNodes.Nodes.PrimitiveMesh import PrimitiveMesh
 
 class NodeTransformGeometryStrings:
     Geometry_str = 'Geometry'
@@ -17,7 +15,7 @@ class NodeTransformGeometryStrings:
 
 
 class NodeTransformGeometry(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Transform Geometry Node allows you to move, rotate or scale the geometry. The transformation is applied to
         the entire geometry, and not per element. The Set Position Node is used for moving individual points of a
@@ -25,7 +23,7 @@ class NodeTransformGeometry(Node):
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
         print('Creating NodeTransformGeometry')
 
         self.cached_output = None
@@ -46,22 +44,26 @@ class NodeTransformGeometry(Node):
                                        NodeTransformGeometryStrings.Scale_str]
 
         transformed_meshes = []
-        for mesh_i, mesh in enumerate(geometry):
-            assert isinstance(mesh, Meshes), 'Geometry must be a mesh'
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            start.record()
 
-            verts = mesh.verts_packed()
-            faces = mesh.faces_packed()
+        assert translation.shape[0] == 1, "Batch size > 1 is not supported yet."
+        assert rotation.shape[0] == 1, "Batch size > 1 is not supported yet."
+        assert scale.shape[0] == 1, "Batch size > 1 is not supported yet."
+
+        for mesh_i, mesh in enumerate(geometry):
+            if mesh.is_empty():
+                transformed_meshes.append(mesh)
+                continue
+
+            assert isinstance(mesh, PrimitiveMesh), 'Geometry must be a PrimitiveMesh, got {}'.format(type(mesh))
+
+            verts = mesh.verts
+            faces = mesh.faces
 
             translation_i = translation[mesh_i]
 
             # rotation_i is in Euler angles, convert to rotation matrix
             rotation_i = euler_angles_to_matrix(rotation[mesh_i], convention='XYZ')
             scale_i = scale[mesh_i]
-
-            verts = verts[None].expand(1, verts.shape[0], verts.shape[1])
 
             # create transform matrix from translation, rotation and scale
             transform_matrix = torch.eye(4, device=self.device)
@@ -76,11 +78,10 @@ class NodeTransformGeometry(Node):
             scale_mat[:, 2, 1] = scale_i[:, 2]
 
             scale = Scale(scale_i)
-            transform = scale.compose(Transform3d(matrix=transform_matrix))
+            transform3d = scale.compose(Transform3d(matrix=transform_matrix))
 
-            verts = transform.transform_points(verts)[0]
 
-            transformed_mesh = Meshes(verts=[verts], faces=[faces])
+            transformed_mesh = mesh.transform(transform3d)
 
             transformed_meshes.append(transformed_mesh)
 

@@ -1,7 +1,9 @@
 import open3d as o3d
 import torch
 import numpy as np
-import bpy
+from multiprocessing import current_process
+if current_process().name == 'MainProcess':
+    import bpy
 import os
 import sys
 import json

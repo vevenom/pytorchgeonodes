@@ -1,11 +1,8 @@
-import bpy
-import torch
-
 from PytorchGeoNodes.Nodes.Node import *
 
 
 class NodeCombXYZ(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Combine XYZ Node combines a vector from its individual components.
 
@@ -14,7 +11,7 @@ class NodeCombXYZ(Node):
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
         print('Creating NodeCombXYZ')
 
         self.cached_output = None

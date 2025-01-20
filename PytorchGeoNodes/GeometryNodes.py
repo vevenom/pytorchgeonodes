@@ -1,10 +1,19 @@
 import torch.nn
 import numpy as np
 from copy import copy
+from multiprocessing import current_process
+
+import yaml
+
+from utils import DictAsMember
+
+if current_process().name == 'MainProcess':
+    import bpy
+    import open3d as o3d
+
 import random
 import dill
 
-import open3d as o3d
 
 from pytorch3d.transforms import Transform3d
 from pytorch3d.structures import Meshes
@@ -17,7 +26,7 @@ from PytorchGeoNodes.Nodes.NodeCombXYZ import NodeCombXYZ
 from PytorchGeoNodes.Nodes.NodeMath import NodeMath
 from PytorchGeoNodes.Nodes.NodeMeshPrimitiveLine import NodeMeshPrimitiveLine
 from PytorchGeoNodes.Nodes.NodeMeshPrimitiveCube import NodeMeshPrimitiveCube
-from PytorchGeoNodes.Nodes.NodeMeshPrimitiveCylinder import NodeMeshPrimitiveCylinder
+from PytorchGeoNodes.Nodes.NodeMeshPrimitiveCylinder import NodePrimitiveCylinder
 from PytorchGeoNodes.Nodes.NodeInstanceOnPoints import NodeInstanceOnPoints
 from PytorchGeoNodes.Nodes.NodeGroupOutput import NodeGroupOutput
 from PytorchGeoNodes.Nodes.NodeGroupInput import NodeGroupInput
@@ -31,12 +40,25 @@ from PytorchGeoNodes.Nodes.NodeGroup import NodeGroup
 from PytorchGeoNodes.Nodes.vis_utils import *
 from PytorchGeoNodes.Nodes.Edge import InEdge, OutEdge
 
+class Counters():
+    def __init__(self):
+        self.total_number_base_primitives = 0
+
+    def increment_total_number_base_primitives(self):
+        self.total_number_base_primitives += 1
+
 class GeometryNodes(torch.nn.Module):
-    def __init__(self, shape_program: BlenderShapeProgram, node_tree=None, name='GeometryNodes'):
+    def __init__(self, shape_program: BlenderShapeProgram, node_tree=None, name='GeometryNodes', counters=Counters(),
+                 config_path='configs/geometry_nodes_config.yaml'):
         super().__init__()
         self.name = name
 
         self._modifiers_dict = shape_program._modifiers_dict
+
+        self.config_path = config_path
+        with open(config_path, 'r') as f:
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
+        self.config = DictAsMember(self.config)
 
         if node_tree is None:
             node_tree = bpy.data.node_groups['Geometry Nodes']
@@ -45,7 +67,12 @@ class GeometryNodes(torch.nn.Module):
         if node_tree != bpy.data.node_groups['Geometry Nodes']:
             self.is_group_node = True
 
-        self.nodes, self.nodes_compute_order_dict = self._generate_graph_(shape_program, node_tree)
+        self.counters = counters
+        self.nodes, self.nodes_compute_order_list, self.trainable_params  = (
+            self._generate_graph_(shape_program, node_tree))
+
+        self.nodes = nn.ModuleList(self.nodes)
+
 
         # Default transform
         transform_py3d2blender = np.eye(4)
@@ -63,6 +90,9 @@ class GeometryNodes(torch.nn.Module):
         for node in self.nodes:
             node.to(device)
         self.transform_py3d2blender = self.transform_py3d2blender.to(device)
+
+    def get_device(self):
+        return self.transform_py3d2blender.device
 
     def draw_graph(self):
         import networkx
@@ -138,6 +168,7 @@ class GeometryNodes(torch.nn.Module):
         # Create nodes
         nodes = torch.nn.Sequential()
         nodes_dict = {}
+        trainable_params = nn.ModuleList()
         for bpy_node in node_tree.nodes:
             torch_node = self.create_node(bpy_node, blender_shape_program)
             if torch_node is None:
@@ -161,14 +192,14 @@ class GeometryNodes(torch.nn.Module):
             from_node.add_out_edge(out_edge)
             to_node.add_in_edge(in_edge)
 
-        nodes_ordered, nodes_compute_order_dict = GeometryNodes.sort_nodes(nodes)
+        nodes_ordered, nodes_compute_order_list = GeometryNodes.sort_nodes(nodes)
 
         if check_pickable:
             for node in nodes_ordered:
                 assert dill.pickles(node), 'Node %s is not pickable' % node.name
             print("All nodes are pickable for graph %s ." % self.name)
 
-        return nodes_ordered, nodes_compute_order_dict
+        return nodes_ordered, nodes_compute_order_list, trainable_params
 
     @staticmethod
     def sort_nodes(nodes):
@@ -234,46 +265,53 @@ class GeometryNodes(torch.nn.Module):
 
                     nodes_compute_order_dict[next_compute_level].append(out_edge.to_node)
 
-        return nodes_ordered, nodes_compute_order_dict
+        nodes_compute_order_list = [None] * len(nodes_compute_order_dict.keys())
+        for key in nodes_compute_order_dict.keys():
+            nodes_compute_order_list[key] = nodes_compute_order_dict[key]
 
-    def create_node(self, bpy_node: bpy.types.GeometryNode, blender_shape_program: BlenderShapeProgram):
+        return nodes_ordered, nodes_compute_order_list
+
+    def create_node(self, bpy_node, blender_shape_program: BlenderShapeProgram):
 
         new_node = None  # type: Node
         if bpy_node.type == NodeTypes.MATH_str:
-            new_node = NodeMath(bpy_node)
+            new_node = NodeMath(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.COMBXYZ_str:
-            new_node = NodeCombXYZ(bpy_node)
+            new_node = NodeCombXYZ(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.GROUP_INPUT_str:
             if self.is_group_node:
-                new_node = NodeGroupInputNested(bpy_node)
+                new_node = NodeGroupInputNested(bpy_node, config=self.config)
             else:
-                new_node = NodeGroupInput(bpy_node, blender_shape_program.get_params_dict())
+                new_node = NodeGroupInput(bpy_node, blender_shape_program.get_params_dict(), config=self.config)
         elif bpy_node.type == NodeTypes.GROUP_OUTPUT_str:
-            new_node = NodeGroupOutput(bpy_node)
+            new_node = NodeGroupOutput(bpy_node, config=self.config)
         # elif bpy_node.type == POINTS_str:
         #     new_node = NodePoints(bpy_node)
         elif bpy_node.type == NodeTypes.MESH_PRIMITIVE_LINE_str:
-            new_node = NodeMeshPrimitiveLine(bpy_node)
+            new_node = NodeMeshPrimitiveLine(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.MESH_PRIMITIVE_CUBE_str:
-            new_node = NodeMeshPrimitiveCube(bpy_node)
+            new_node = NodeMeshPrimitiveCube(self.counters.total_number_base_primitives, bpy_node, config=self.config)
+            self.counters.increment_total_number_base_primitives()
         elif bpy_node.type == NodeTypes.MESH_PRIMITIVE_CYLINDER_str:
-            new_node = NodeMeshPrimitiveCylinder(bpy_node)
+            new_node = NodePrimitiveCylinder(self.counters.total_number_base_primitives, bpy_node, config=self.config)
+            self.counters.increment_total_number_base_primitives()
         elif bpy_node.type == NodeTypes.INSTANCE_ON_POINTS_str:
-            new_node = NodeInstanceOnPoints(bpy_node)
+            new_node = NodeInstanceOnPoints(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.REALIZE_INSTANCES_str:
-            new_node = NodeRealizeInstances(bpy_node)
+            new_node = NodeRealizeInstances(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.TRANSFORM_GEOMETRY_str:
-            new_node = NodeTransformGeometry(bpy_node)
+            new_node = NodeTransformGeometry(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.VECT_MATH_str:
-            new_node = NodeVectMath(bpy_node)
+            new_node = NodeVectMath(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.GROUP_str:
             # create a new graph for the group
-            new_graph = GeometryNodes(blender_shape_program, node_tree=bpy_node.node_tree, name=bpy_node.name)
-            new_node = NodeGroup(bpy_node, new_graph)
+            new_graph = GeometryNodes(blender_shape_program, node_tree=bpy_node.node_tree, name=bpy_node.name,
+                                      counters=self.counters, config_path=self.config_path)
+            new_node = NodeGroup(bpy_node, new_graph, config=self.config)
         elif bpy_node.type == NodeTypes.JOIN_GEOMETRY_str:
-            new_node = NodeJoinGeometry(bpy_node)
+            new_node = NodeJoinGeometry(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.SWITCH_str:
-            new_node = NodeSwitch(bpy_node)
+            new_node = NodeSwitch(bpy_node, config=self.config)
         elif bpy_node.type == NodeTypes.FRAME_str:
             # Frames seem to be used only for better visualization in Blender to seperate different blocks of nodes
             # They are not used in the actual computation
@@ -302,7 +340,7 @@ class GeometryNodes(torch.nn.Module):
             NodeTypes.Geometry_Nodes_Inputs_str: copy(inputs_dict),
             NodeTypes.Geometry_Nodes_Outputs_str: {}
         }
-        inputs_dict = NodeInputsDict(inputs_dict)
+        inputs_dict = NodeInputsDict(inputs_dict, self.config)
 
         if not self.is_group_node:
             for key in list(inputs_dict[NodeTypes.Geometry_Nodes_Inputs_str].keys()):
@@ -310,21 +348,47 @@ class GeometryNodes(torch.nn.Module):
                     inputs_dict)[NodeTypes.Geometry_Nodes_Inputs_str][key]
 
         outputs = []
-
         for node in self.nodes:
+            # # calculate time needed for geometry nodes
+            # start = torch.cuda.Event(enable_timing=True)
+            # end = torch.cuda.Event(enable_timing=True)
+            #
+            # start.record()
+            # out = node.forward(inputs_dict)
+            #
+            # end.record()
+            #
+            # torch.cuda.synchronize()
+            # print('Time needed for node {} nodes: {}'.format(node.name, start.elapsed_time(end)))
+
             out = node.forward(inputs_dict)
             if out is not None:
                 outputs.append(out)
 
-        if transform2blender_coords:
+        if transform2blender_coords and not self.is_group_node:
             for output in outputs:
                 for out in output:
                     for o_i, o in enumerate(out):
-                        verts = o.verts_packed()
+                        verts = o.verts
                         verts = self.transform_py3d2blender.transform_points(verts)
 
-                        mesh = Meshes(verts=[verts], faces=[o.faces_packed()])
-                        out[o_i] = mesh
+                        assert verts.shape[0] == 1, 'Batch size > 1 not supported yet.'
+                        # mesh = Meshes(verts=[verts[0]], faces=[o.faces[0]])
+                        # out[o_i] = mesh
+
+                        o.verts = verts
+
+        elif not self.is_group_node:
+            for output in outputs:
+                for out in output:
+                    for o_i, o in enumerate(out):
+                        verts = o.verts
+
+                        # assert verts.shape[0] == 1, 'Batch size > 1 not supported yet.'
+                        # mesh = Meshes(verts=[verts[0]], faces=[o.faces[0]])
+                        # out[o_i] = mesh
+
+                        o.verts = verts
 
         return inputs_dict, outputs
 
@@ -341,8 +405,8 @@ class GeometryNodes(torch.nn.Module):
             output_o3d = []
             output = output[b_index]
             for mesh in output:
-                verts_np = mesh.verts_packed().detach().cpu().numpy()
-                faces_np = mesh.faces_packed().detach().cpu().numpy()
+                verts_np = mesh.verts.detach().cpu().numpy()[0]
+                faces_np = mesh.faces.detach().cpu().numpy()[0]
 
                 o3d_mesh = o3d.geometry.TriangleMesh()
                 o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
@@ -352,3 +416,56 @@ class GeometryNodes(torch.nn.Module):
             outputs_o3d.append(output_o3d)
         return outputs_o3d
 
+    def o3d_visualize_colorize_base_primitives(self, outputs, b_index, return_geometry=False, show=False):
+        from PytorchGeoNodes.utils import colormap
+
+        outputs_o3d = []
+        for output in outputs:
+            output_o3d = []
+            output = output[b_index]
+            for mesh in output:
+                verts_np = mesh.verts.detach().cpu().numpy()[0]
+                faces_np = mesh.faces.detach().cpu().numpy()[0]
+
+                base_prim_ids_np = mesh.verts_base_primitive_ids.detach().cpu().numpy().astype(np.int32)[0]
+                colors_np = colormap[base_prim_ids_np + 1]
+
+                o3d_mesh = o3d.geometry.TriangleMesh()
+                o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
+                o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(colors_np)
+                o3d_mesh.triangles = o3d.utility.Vector3iVector(faces_np)
+
+                output_o3d.append(o3d_mesh)
+            outputs_o3d.extend(output_o3d)
+
+        if show:
+            o3d.visualization.draw_geometries(outputs_o3d)
+        if return_geometry:
+            return outputs_o3d
+
+    def o3d_visualize_colorize_individual_primitives(self, outputs, b_index, return_geometry=False, show=False):
+        from PytorchGeoNodes.utils import colormap
+
+        outputs_o3d = []
+        for output in outputs:
+            output_o3d = []
+            output = output[b_index]
+            for mesh in output:
+                verts_np = mesh.verts.detach().cpu().numpy()[0]
+                faces_np = mesh.faces.detach().cpu().numpy()[0]
+
+                ind_prim_ids_np = mesh.verts_individual_primitive_ids.detach().cpu().numpy().astype(np.int32)[0]
+                colors_np = colormap[ind_prim_ids_np + 1]
+
+                o3d_mesh = o3d.geometry.TriangleMesh()
+                o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
+                o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(colors_np)
+                o3d_mesh.triangles = o3d.utility.Vector3iVector(faces_np)
+
+                output_o3d.append(o3d_mesh)
+            outputs_o3d.extend(output_o3d)
+
+        if show:
+            o3d.visualization.draw_geometries(outputs_o3d)
+        if return_geometry:
+            return outputs_o3d

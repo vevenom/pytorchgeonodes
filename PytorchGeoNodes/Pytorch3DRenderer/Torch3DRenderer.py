@@ -27,7 +27,7 @@ class Torch3DRenderer:
             bin_size=0,
             perspective_correct=True,
             clip_barycentric_coords=False,
-            cull_backfaces=False,
+            cull_backfaces=True,
             z_clip_value=z_clip_value
         )
 
@@ -64,10 +64,10 @@ class Torch3DRenderer:
             )
         else:
             shader = SimpleShader()
-            lights = PointLights(device=device, location=[[0.0, 0.0, -3.0]])
+            lights = PointLights(device=device, location=[[1.0, 1.0, -3.0]])
             blend_params = BlendParams(sigma=1e-4, gamma=1e-4, background_color=(0.0, 0.0, 0.0))
 
-            renderer = MeshRenderer(
+            renderer = MeshRendererScannet(
                 rasterizer=MeshRasterizer(
                     cameras=cameras,
                     raster_settings=raster_settings),

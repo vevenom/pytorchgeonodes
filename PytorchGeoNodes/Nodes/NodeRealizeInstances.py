@@ -7,7 +7,7 @@ class NodeRealizeInstancesStrings:
     GEOMETRY_str = 'Geometry'
 
 class NodeRealizeInstances(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Realize Instances node makes any instances (efficient duplicates of the same geometry) into real geometry
         data. This makes it possible to affect each instance individually, whereas without this node, the exact same
@@ -17,7 +17,7 @@ class NodeRealizeInstances(Node):
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
         print('Creating NodeRealizeInstances')
 
         self.cached_output = None
@@ -34,8 +34,9 @@ class NodeRealizeInstances(Node):
         meshes = []
         for mesh_i, mesh in enumerate(inputs_dict[self.name][NodeStrings.IN_str +
                                                              NodeRealizeInstancesStrings.GEOMETRY_str]):
-            new_mesh = Meshes(verts=[mesh.verts_packed()], faces=[mesh.faces_packed()])
+            new_mesh = mesh.clone()
             meshes.append(new_mesh)
+            assert new_mesh.verts.shape[0] == mesh.verts.shape[0], f'got {new_mesh.verts.shape[0]} mesh vertices'
 
         inputs_dict[self.name][NodeStrings.OUT_str + 'Geometry'] = meshes
 

@@ -8,21 +8,21 @@
         "Width": {
           "type": "float",
           "range": [
-            0.4,
+            0.3,
             4.0
           ]
         },
         "Height": {
           "type": "float",
           "range": [
-            0.4,
+            0.3,
             1.3
           ]
         },
         "Depth": {
           "type": "float",
           "range": [
-            0.4,
+            0.3,
             1.5
           ]
         }
@@ -41,7 +41,7 @@
         "Top Thickness": {
             "type": "float",
             "range": [
-              0.04,
+              0.01,
               0.1
             ]
           }
@@ -51,17 +51,72 @@
       "type": "nested",
       "params": {
         "Legs Type": {
-         "type": "int",
-            "range": [
-              0,
-              3
-            ]
+          "type": "int",
+          "range": [
+            0,
+            2
+          ]
+        },
+        "Legs Type": {
+          "type": "int",
+          "range": [
+            0,
+            2
+          ]
+        },
+        "Has Cabinet Leg": {
+          "type": "bool",
+          "range": [
+            0,
+            2
+          ],
+          "or_dependencies": [["Legs Type", 1]]
+        },
+        "Cabinet Width Scale": {
+          "type": "float",
+          "range": [
+            0.3,
+            0.5
+          ],
+          "or_dependencies": [["Legs Type", 1], "Has Cabinet Leg"]
+        },
+        "Legs Scale X": {
+          "type": "float",
+          "range": [
+            0.01,
+            0.1
+          ],
+          "or_dependencies": [["Legs Type", 1]]
+        },
+        "Legs Scale Y": {
+          "type": "float",
+          "range": [
+            0.01,
+            0.5
+          ],
+          "or_dependencies": [["Legs Type", 1]]
+        },
+        "Legs Offset X": {
+          "type": "float",
+          "range": [
+            0.0,
+            1.0
+          ],
+          "or_dependencies": [["Legs Type", 1]]
+        },
+        "Legs Offset Y": {
+          "type": "float",
+          "range": [
+            0.0,
+            1.0
+          ],
+          "or_dependencies": [["Legs Type", 1]]
         },
         "Mid Leg X Scale": {
               "type": "float",
               "range": [
                   0.05,
-                  1.0
+                  0.5
               ],
               "or_dependencies": [["Legs Type", 0]]
               },
@@ -69,7 +124,7 @@
             "type": "float",
             "range": [
                 0.05,
-                1.0
+                0.5
             ],
             "or_dependencies": [["Legs Type", 0]]
         }
@@ -80,12 +135,12 @@
       "params": {
         "Has Mid Board": {
          "type": "bool",
-          "or_dependencies": [["Legs Type", 2]]
+          "or_dependencies": [["Legs Type", 1]]
         },
         "Mid Board Z Scale": {
             "type": "float",
             "range": [
-                0.05,
+                0.00,
                 0.5
             ],
             "or_dependencies": ["Has Mid Board"]

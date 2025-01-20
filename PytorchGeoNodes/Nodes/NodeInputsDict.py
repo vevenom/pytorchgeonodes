@@ -1,8 +1,10 @@
 
 
 class NodeInputsDict(object):
-    def __init__(self, input_dict):
+    def __init__(self, input_dict, config):
         self.input_dict = input_dict
+
+        self.config = config
 
     def __getitem__(self, key):
         return self.input_dict[key]

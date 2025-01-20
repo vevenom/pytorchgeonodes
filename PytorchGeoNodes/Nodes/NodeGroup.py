@@ -1,17 +1,16 @@
-import bpy
 import torch
 
 from PytorchGeoNodes.Nodes.Node import *
 from PytorchGeoNodes.Nodes.node_types import NodeTypes
 
 class NodeGroup(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode, geometry_nodes):
+    def __init__(self, bpy_node, geometry_nodes, config):
         """
         Node that groups other nodes.
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating NodeGroup')
 

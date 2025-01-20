@@ -1,4 +1,3 @@
-import bpy
 import torch
 
 from PytorchGeoNodes.Nodes.Node import *
@@ -6,13 +5,13 @@ from PytorchGeoNodes.Nodes.node_types import NodeTypes
 from PytorchGeoNodes.BlenderShapeProgram import BlenderShapeProgram
 
 class NodeGroupInput(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode, params_dict):
+    def __init__(self, bpy_node, params_dict, config):
         """
         The Group Input Node groups inputs .
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating NodeGroupInput')
 

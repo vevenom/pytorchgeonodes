@@ -1,6 +1,6 @@
 {
   "class_name" : "chair",
-  "blend_path" : "./ShapeProgramsDataset/chair.blend",
+  "blend_path" : "./ShapeProgramsDataset/chair2.blend",
   "params" : {
     "Legs": {
       "type": "nested",
@@ -11,16 +11,35 @@
         },
         "Legs Size": {
           "type": "float",
-          "range": [0.02, 0.08]
+          "range": [0.01, 0.1]
         },
         "Has Middle Support": {
             "type": "bool",
             "or_dependencies": [["Legs Type", 0]]
         },
-        "Middle Offset": {
+        "Middle Offset 1": {
             "type": "float",
             "range": [0.0, 0.5],
             "or_dependencies": [["Legs Type", 0], "Has Middle Support"]
+        },
+        "Middle Offset 2": {
+            "type": "float",
+            "range": [0.0, 0.5],
+            "or_dependencies": [["Legs Type", 0], "Has Middle Support"]
+        },
+        "Middle Support Thickness": {
+            "type": "float",
+            "range": [0.01, 0.06],
+            "or_dependencies": [["Legs Type", 0], "Has Middle Support"]
+        },
+        "Bottom Star": {
+          "type": "bool",
+          "or_dependencies": [["Legs Type", 1]]
+        },
+        "Star Rotation": {
+          "type": "float",
+          "range": [0.0, 1.00],
+          "or_dependencies": ["Bottom Star"]
         },
         "Bottom Thickness": {
           "type": "float",
@@ -29,7 +48,7 @@
         },
         "Bottom Size Scale": {
           "type": "float",
-          "range": [0.7, 1.0],
+          "range": [0.1, 1.0],
           "or_dependencies": [["Legs Type", 1]]
         }
       }
@@ -39,7 +58,7 @@
         "params": {
             "Seat Height": {
               "type": "float",
-              "range": [0.3, 0.9]
+              "range": [0.3, 0.7]
             },
             "Seat Width": {
               "type": "float",
@@ -51,7 +70,7 @@
             },
            "Seat Thickness": {
             "type": "float",
-            "range": [0.04, 0.1]
+            "range": [0.03, 0.2]
             }
           }
         },
@@ -63,7 +82,7 @@
           },
            "Back Height": {
               "type": "float",
-              "range": [0.3, 1.0],
+              "range": [0.3, 0.5],
               "or_dependencies": ["Has Back"]
           },
           "Backrest Scale": {
@@ -73,12 +92,12 @@
           },
           "Back Thickness": {
             "type": "float",
-            "range": [0.02, 0.08],
+            "range": [0.04, 0.1],
             "or_dependencies": ["Has Back"]
           },
           "Backrest Offset Scale": {
             "type": "float",
-            "range": [0.0, 1.0],
+            "range": [0.5, 1.0],
             "or_dependencies": ["Has Back"]
           }
       }
@@ -100,7 +119,7 @@
           "Arm Height": {
             "type": "float",
             "range": [
-              0.1,
+              0.2,
               0.3
             ],
             "or_dependencies": ["Has Arms"]

@@ -11,7 +11,7 @@ from pytorch3d.transforms import matrix_to_axis_angle
 from SPSearch.constants.constants import NodesTypes
 
 from SPSearch.SyntheticTarget.SyntheticTarget import SyntheticTarget
-from SPSearch.SPGame import DVProposal, TransProposal
+from SPSearch.DVProposals import DVProposal, TransProposal
 
 class CoordinateDescent(object):
     def __init__(self, game, scene_reconstructions_path, settings):
@@ -66,7 +66,12 @@ class CoordinateDescent(object):
                 for val_ind, value in enumerate(dv.values):
                     tmp_prop_seq[dv_ind].decision_value = value
 
+
                     loss = self.game.calc_loss_from_proposals(tmp_prop_seq)
+                    if self.settings.refinement.use_refinement:
+                        tmp_prop_seq, loss = self.optimize(self.settings.refinement.optimizer_lr,
+                            prop_seq=tmp_prop_seq)
+
                     if loss < best_loss_per_value[dv_ind][val_ind]:
                         best_loss_per_value[dv_ind][val_ind] = loss.item()
 
@@ -78,50 +83,110 @@ class CoordinateDescent(object):
                             best_loss = loss.item()
                             best_prop_seq = copy.deepcopy(tmp_prop_seq)
 
-            if new_best_solution_found:
-                if self.settings.refinement.use_refinement:
-                    best_prop_seq, best_loss = self.optimize(
-                        prop_seq=best_prop_seq,
-                        optimize_threshold=5.0)
-                with torch.no_grad():
+                            # if self.settings.refinement.use_refinement:
+                            #     best_prop_seq, best_loss = self.optimize(
+                            #         prop_seq=best_prop_seq)
+                            with torch.no_grad():
 
-                    input_dict, rotation_matrix, translation_offset = self.game.parse_prop_seq(
-                        prop_seq=best_prop_seq)
+                                input_dict, rotation_matrix, translation_offset = self.game.parse_prop_seq(
+                                    prop_seq=best_prop_seq)
 
-                    print('-' * 80)
-                    print("New best parameters")
-                    print(input_dict)
-                    print('rotation', matrix_to_axis_angle(rotation_matrix[:, :3, :3]))
-                    print('translation_offset', translation_offset)
+                                # print('-' * 80)
+                                # print("New best parameters")
+                                # print(input_dict)
+                                # print('rotation', matrix_to_axis_angle(rotation_matrix[:, :3, :3]))
+                                # print('translation_offset', translation_offset)
 
-                    self.target.log_iter_from_input_dict(input_dict,
-                                                         rotation_matrix, translation_offset, curr_step,
-                                                         file_prefix='best_')
-                    self.target.log_iter_from_input_dict(input_dict,
-                                                         rotation_matrix, translation_offset, 0,
-                                                         file_prefix='0best_')
+                                self.target.log_iter_from_input_dict(input_dict,
+                                                                     rotation_matrix, translation_offset, curr_step,
+                                                                     file_prefix='best_')
+                                self.target.log_iter_from_input_dict(input_dict,
+                                                                     rotation_matrix, translation_offset, 0,
+                                                                     file_prefix='0best_')
 
-                    curr_runtime = time.time() - start_time
+                                curr_runtime = time.time() - start_time
 
-                    print('New best lest: %f' % best_loss)
-                    print('Current runtime in minutes: %f' % np.round(curr_runtime / 60.0, decimals=3))
+                                print('New best loss: %f' % best_loss)
+                                print('Current runtime in minutes: %f' % np.round(curr_runtime / 60.0, decimals=3))
 
-                    logger.log_solution_dict(input_dict, matrix_to_axis_angle(
-                        rotation_matrix[:, :3, :3]),
-                                             translation_offset, curr_step, file_prefix='best_')
+                                logger.log_solution_dict(input_dict, matrix_to_axis_angle(
+                                    rotation_matrix[:, :3, :3]),
+                                                         translation_offset, curr_step, file_prefix='best_')
 
-                    logger.log_solution_dict(input_dict,
-                                             matrix_to_axis_angle(rotation_matrix[:, :3, :3]),
-                                             translation_offset, 0, file_prefix='0best_')
+                                logger.log_solution_dict(input_dict,
+                                                         matrix_to_axis_angle(rotation_matrix[:, :3, :3]),
+                                                         translation_offset, 0, file_prefix='0best_')
 
-                    meta_dict = {
-                        'best_loss': float(best_loss),
-                        'best_time': curr_runtime,
-                        'full_time': curr_runtime
-                    }
-                    with open(os.path.join(self.target.log_path, 'best_{0}_meta.json.json'.format(curr_step)),
-                              'w') as f:
-                        json.dump(meta_dict, f)
+                                meta_dict = {
+                                    'best_loss': float(best_loss),
+                                    'best_time': curr_runtime,
+                                    'full_time': curr_runtime
+                                }
+                                with open(os.path.join(self.target.log_path, 'best_{0}_meta.json.json'.format(curr_step)),
+                                          'w') as f:
+                                    json.dump(meta_dict, f)
+
+                                with open(os.path.join(
+                                        self.game.target.log_path, '0best_meta.json'),
+                                        'w') as f:
+                                    json.dump(meta_dict, f)
+
+        if self.settings.refinement.use_refinement and self.settings.refinement.final_optimization_steps:
+            print("Final optimization...")
+            tmp_prop_seq, loss = self.optimize(self.settings.refinement.optimizer_lr,
+                                               prop_seq=best_prop_seq, final_optimization=True)
+
+            with torch.no_grad():
+                if loss < best_loss:
+                    best_loss = loss.item()
+                    best_prop_seq = copy.deepcopy(tmp_prop_seq)
+
+                    # if self.settings.refinement.use_refinement:
+                    #     best_prop_seq, best_loss = self.optimize(
+                    #         prop_seq=best_prop_seq)
+                    with torch.no_grad():
+                        input_dict, rotation_matrix, translation_offset = self.game.parse_prop_seq(
+                            prop_seq=best_prop_seq)
+
+                        # print('-' * 80)
+                        # print("New best parameters")
+                        # print(input_dict)
+                        # print('rotation', matrix_to_axis_angle(rotation_matrix[:, :3, :3]))
+                        # print('translation_offset', translation_offset)
+
+                        self.target.log_iter_from_input_dict(input_dict,
+                                                             rotation_matrix, translation_offset, curr_step,
+                                                             file_prefix='best_')
+                        self.target.log_iter_from_input_dict(input_dict,
+                                                             rotation_matrix, translation_offset, 0,
+                                                             file_prefix='0best_')
+
+                        curr_runtime = time.time() - start_time
+
+                        print('New best loss: %f' % best_loss)
+                        print('Current runtime in minutes: %f' % np.round(curr_runtime / 60.0, decimals=3))
+
+                        logger.log_solution_dict(input_dict, matrix_to_axis_angle(
+                            rotation_matrix[:, :3, :3]),
+                                                 translation_offset, curr_step, file_prefix='best_')
+
+                        logger.log_solution_dict(input_dict,
+                                                 matrix_to_axis_angle(rotation_matrix[:, :3, :3]),
+                                                 translation_offset, 0, file_prefix='0best_')
+
+                        meta_dict = {
+                            'best_loss': float(best_loss),
+                            'best_time': curr_runtime,
+                            'full_time': curr_runtime
+                        }
+                        with open(os.path.join(self.target.log_path, 'best_{0}_meta.json.json'.format(curr_step)),
+                                  'w') as f:
+                            json.dump(meta_dict, f)
+
+                        with open(os.path.join(
+                                self.game.target.log_path, '0best_meta.json'),
+                                'w') as f:
+                            json.dump(meta_dict, f)
 
         # assert False
         if return_best_loss_per_value:
@@ -129,7 +194,7 @@ class CoordinateDescent(object):
         else:
             return best_loss
 
-    def optimize(self, prop_seq, optimize_threshold):
+    def optimize(self, lr, prop_seq, final_optimization=False):
         best_loss = np.inf
 
         parameters_to_train = []
@@ -142,11 +207,23 @@ class CoordinateDescent(object):
 
         assert parameters_to_train
 
-        optimizer = torch.optim.Adam(parameters_to_train, lr=self.settings.refinement.optimizer_lr)
+        if self.settings.refinement.optimizer == 'Adam':
+            optimizer = torch.optim.Adam(parameters_to_train, lr=lr)
+        elif self.settings.refinement.optimizer == 'SGD':
+            optimizer = torch.optim.SGD(parameters_to_train, lr=lr)
+        elif self.settings.refinement.optimizer == 'Lion':
+            optimizer = Lion(parameters_to_train, lr=lr)
+        else:
+            raise ValueError('Unknown optimizer: %s' % self.settings.refinement.optimizer)
 
         # best_values = []
         best_props = prop_seq
-        for iter in range(self.settings.refinement.optimize_steps):
+
+        optimizer_steps = self.settings.refinement.optimize_steps
+        if final_optimization:
+            optimizer_steps = self.settings.refinement.final_optimization_steps
+
+        for optim_iter in range(optimizer_steps):
             optimizer.zero_grad()
 
             curr_loss = self.game.calc_loss_from_proposals(prop_seq)
@@ -156,11 +233,11 @@ class CoordinateDescent(object):
 
                 best_props = copy.deepcopy(prop_seq)
 
-            if curr_loss > best_loss + 0.005:
+            if curr_loss > best_loss and not final_optimization:
                 break
 
-            if curr_loss > optimize_threshold:
-                break
+            # if curr_loss > optimize_threshold:
+            #     break
 
             curr_loss.backward()
             optimizer.step()
@@ -178,6 +255,7 @@ class CoordinateDescent(object):
                                     min=dv.valid_range[0],
                                     max=dv.valid_range[1])
 
+        # Set best values to proposals
         with (torch.no_grad()):
             for p_ind, p in enumerate(prop_seq):
                 if isinstance(p, DVProposal):
@@ -191,6 +269,63 @@ class CoordinateDescent(object):
                             best_props[p_ind].get_translation_offset().clone().detach()
 
         return best_props, best_loss
+
+    # def optimize(self, prop_seq):
+    #     best_loss = np.inf
+    #
+    #     parameters_to_train = []
+    #     for prop in prop_seq:
+    #         prop_params_list = prop.get_params_list()
+    #         for prop in prop_params_list:
+    #             if any(prop is train_param for train_param in parameters_to_train):
+    #                 continue
+    #             parameters_to_train.append(prop)
+    #
+    #     assert parameters_to_train
+    #
+    #     optimizer = torch.optim.Adam(parameters_to_train, lr=self.settings.refinement.optimizer_lr)
+    #
+    #     # best_values = []
+    #     best_props = prop_seq
+    #     for iter in range(self.settings.refinement.optimize_steps):
+    #         optimizer.zero_grad()
+    #
+    #         curr_loss = self.game.calc_loss_from_proposals(prop_seq)
+    #
+    #         if curr_loss < best_loss:
+    #             best_loss = curr_loss
+    #
+    #             best_props = copy.deepcopy(prop_seq)
+    #
+    #         curr_loss.backward()
+    #         optimizer.step()
+    #
+    #         with torch.no_grad():
+    #             for dv_ind, dv in enumerate(self.game.decision_var_list):
+    #                 if isinstance(prop_seq[dv_ind], DVProposal):
+    #                     if prop_seq[dv_ind].get_decision_value().get_value().requires_grad:
+    #                         if dv.normalized_values:
+    #                             prop_seq[dv_ind].get_decision_value().value.clamp_(
+    #                                 min=-1,
+    #                                 max=1)
+    #                         else:
+    #                             prop_seq[dv_ind].get_decision_value().value.clamp_(
+    #                                 min=dv.valid_range[0],
+    #                                 max=dv.valid_range[1])
+    #
+    #     with (torch.no_grad()):
+    #         for p_ind, p in enumerate(prop_seq):
+    #             if isinstance(p, DVProposal):
+    #                 if p.get_decision_value().get_value().requires_grad:
+    #                     p.decision_value.value[:] = \
+    #                         best_props[p_ind].get_decision_value().value.clone().detach()
+    #
+    #             elif isinstance(p, TransProposal):
+    #                 if p.translation_offset.requires_grad:
+    #                     p.translation_offset[:] = \
+    #                         best_props[p_ind].get_translation_offset().clone().detach()
+    #
+    #     return best_props, best_loss
 
 
 

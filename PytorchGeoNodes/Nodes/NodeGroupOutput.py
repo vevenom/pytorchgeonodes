@@ -1,16 +1,18 @@
 from pytorch3d.structures import Meshes
 
 from PytorchGeoNodes.Nodes.Node import *
+from PytorchGeoNodes.Nodes.PrimitiveGeometry import PrimitiveGeometry
 from PytorchGeoNodes.Nodes.node_types import *
+from PytorchGeoNodes.Nodes.PrimitiveMesh import PrimitiveMesh
 
 class NodeGroupOutput(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Group Output Node adds output to the dict of previously added outputs.
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating NodeGroupOutput')
 
@@ -21,7 +23,9 @@ class NodeGroupOutput(Node):
         for output_key in inputs_dict[self.name].keys():
             b_meshes = []
             for mesh in inputs_dict[self.name][output_key]:
-                assert isinstance(mesh, Meshes), 'Only Meshes are supported as outputs for now'
+                assert isinstance(mesh, PrimitiveMesh) or \
+                isinstance(mesh, PrimitiveGeometry), (
+                    'Geometry must be a PrimitiveMesh, or PrimitiveGeometry, got {}'.format(type(mesh)))
 
                 b_meshes.append(mesh)
 

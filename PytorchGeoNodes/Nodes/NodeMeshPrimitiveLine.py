@@ -4,7 +4,7 @@ class NodeMeshPrimitiveLineStrings:
     OFFSET_str = 'OFFSET'
 
 class NodeMeshPrimitiveLine(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Mesh Line node generates vertices in a line and connects them with edges.
 
@@ -17,7 +17,7 @@ class NodeMeshPrimitiveLine(Node):
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating MeshPrimitiveLine')
 

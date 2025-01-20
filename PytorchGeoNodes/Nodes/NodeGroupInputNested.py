@@ -2,13 +2,13 @@ from PytorchGeoNodes.Nodes.Node import *
 from PytorchGeoNodes.Nodes.node_types import *
 
 class NodeGroupInputNested(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Group Input Node groups inputs .
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating NodeGroupInputNested')
 

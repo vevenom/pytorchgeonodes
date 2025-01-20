@@ -1,4 +1,3 @@
-import bpy
 from torch import nn
 import torch
 
@@ -24,10 +23,11 @@ class NodeStrings:
     OUT_str = 'Out'
 
 class Node(nn.Module):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         super().__init__()
 
         self.device = 'cpu'
+        self.config = config
 
         self.type = bpy_node.type
         self.name = bpy_node.name
@@ -91,11 +91,10 @@ class Node(nn.Module):
         else:
             all_inputs_have_cache = True
             for edge in self.in_edges:
-                    if not edge.from_node.use_cache:
+                    if not edge[0].use_cache:
                         all_inputs_have_cache = False
                         break
             self.use_cache = all_inputs_have_cache
-
     def to(self, device):
         super().to(device)
         self.device = device

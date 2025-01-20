@@ -1,1 +1,0 @@
-from .Prop import Proposal

@@ -1,2 +1,5 @@
-processed_data_path: './processed_data'
+experiments_path_base: '../Pytorchgeonodes_experiments'
+processed_data_path: 'processed_data/'
 cd_config_path: './configs/cd_config.yaml'
+scannotate_config_path: './configs/scannotate_config.yaml'
+

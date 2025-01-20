@@ -1,19 +1,33 @@
 import torch
 import numpy as np
 import os
+import copy
+from multiprocessing.managers import BaseManager as mpBaseManager
+from multiprocessing.managers import NamespaceProxy as mpNamespaceProxy
 
 from pytorch3d.transforms import Transform3d
 from pytorch3d.transforms import Translate
 from pytorch3d.structures import Meshes
+from pytorch3d.ops import sample_points_from_meshes, knn_points, ball_query
+from pytorch3d.loss.chamfer import chamfer_distance
 
 from SPSearch.Target import Target
 from SPSearch.SyntheticTarget.LossBatched import LossBatched
+from SPSearch.SyntheticTarget.LossBatchedSlow import LossBatchedSlow
 
+class SyntheticTargetClassProxy(mpNamespaceProxy):
+    _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'calculate_cost_from_input_dict')
+
+    def calculate_cost_from_input_dict(self, input_params_dict, rotation_matrix, translation_offset):
+        callmethod = object.__getattribute__(self, '_callmethod')
+        return callmethod('calculate_cost_from_input_dict',
+                          args=(input_params_dict, rotation_matrix, translation_offset,))
 
 class SyntheticTarget(Target):
     def __init__(self, scene_dict,
                  geometry_nodes,
-                 log_path=None):
+                 log_path=None,
+                 settings=None):
         super().__init__(log_path)
 
         assert log_path is not None, "log_path must be provided"
@@ -23,27 +37,78 @@ class SyntheticTarget(Target):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        self.fast_loss = LossBatchedSlow(settings.loss)
+        self.full_loss = LossBatchedSlow(settings.loss)
 
-        self.loss = LossBatched()
+        self.optimize_translation = False
 
-        self.scene_dict = scene_dict
+        self.scene_name = scene_dict['scene_name']
+        self.scene_mask = scene_dict['scene_mask']
+        self.scene_depth = scene_dict['scene_depth']
+        self.renderer = scene_dict['renderer']
+        self.scene_pcd = scene_dict['scene_pcd']
 
         print('SytheticTarget initialized with scene: {}'.format(scene_dict['scene_name']))
+
+    def get_class(self):
+        return SyntheticTarget
+    def get_class_proxy_(self):
+        return SyntheticTargetClassProxy
+
+    def get_input_attributes(self):
+        scene_dict = {
+            'scene_name': self.scene_name,
+            'scene_pcd': self.scene_pcd,
+            'scene_mask': self.scene_mask,
+            'scene_depth': self.scene_depth,
+            'renderer': self.renderer
+        }
+        return scene_dict, self.geometry_nodes, self.log_path
+
+    def loss(self, obj_mesh, scene_dict):
+
+        mesh_pcd = (
+            sample_points_from_meshes(obj_mesh, num_samples=10000))
+        mesh_pcd = torch.cat((mesh_pcd, obj_mesh.verts_packed()[None]), dim=1)
+
+        (cd_loss_x, cd_loss_y) = chamfer_distance(scene_dict['scene_pcd'], mesh_pcd,
+                                                  batch_reduction=None,
+                                                  point_reduction=None,
+                                                  # x_normals=self.surface_points_normals[None],
+                                                  # y_normals=mesh_normals,
+                                                  norm=1,
+                                                  single_directional=False)[0]  # / self.cd_clamp
+
+        loss = cd_loss_x.mean() + cd_loss_y.mean()
+
+        return loss
+
 
     def calculate_mesh_from_input_dict(self, input_params_dict, rotation_matrix, translation_offset=None):
         device = self.device
 
-        #         start.record()
+        # # calculate time needed for geometry nodes
+        # start = torch.cuda.Event(enable_timing=True)
+        # end = torch.cuda.Event(enable_timing=True)
+        #
+        # start.record()
         _, outputs = self.geometry_nodes.forward(input_params_dict, transform2blender_coords=True)
         obj_mesh = outputs[0][0][0]
-        #         end.record()
+        obj_mesh = Meshes(verts=obj_mesh.verts, faces=obj_mesh.faces)
 
-        #         torch.cuda.synchronize()
-
+        # end.record()
+        #
+        # torch.cuda.synchronize()
+        #
         # print('Time needed for geometry nodes: {}'.format(start.elapsed_time(end)))
 
         verts = obj_mesh.verts_packed()
         faces = obj_mesh.faces_packed()
+
+        bb = obj_mesh.get_bounding_boxes()  # (N, 3, 2)
+        bb_center = (bb[:, :, 1] - bb[:, :, 0]) / 2 + bb[:, :, 0]
+
+        verts = verts - bb_center
 
         transform = Transform3d(device=device)
 
@@ -79,9 +144,19 @@ class SyntheticTarget(Target):
 #         loss = self.scannotate_loss(obj_mesh, scene_frame_iterator,
 #                                     self.scan2cad_instance.scannet_instance.scannet_pose_to_py3d)
 
-        loss = self.loss(obj_mesh, self.scene_dict)
+        scene_dict = {
+            'scene_pcd': self.scene_pcd,
+            'scene_mask': self.scene_mask,
+            'scene_depth': self.scene_depth,
+            'renderer': self.renderer
+        }
 
+        # if use_fast_loss:
+        #     loss = self.fast_loss(obj_mesh, scene_dict)
+        # else:
+        #     loss = self.full_loss(obj_mesh, scene_dict)
 #         end.record()
+        loss = self.loss(obj_mesh, scene_dict)
 
 #         torch.cuda.synchronize()
         # print('Time needed for loss function: {}'.format(start.elapsed_time(end)))
@@ -95,7 +170,7 @@ class SyntheticTarget(Target):
 
         obj_mesh = self.calculate_mesh_from_input_dict(input_params_dict, rotation_matrix, translation_offset)
 
-        num_views = self.scene_dict['renderer'].rasterizer.cameras.T.shape[0]
+        num_views = self.renderer.rasterizer.cameras.T.shape[0]
         obj_mesh = obj_mesh.extend(num_views)
 
         # self.scene_dict contains:
@@ -107,7 +182,7 @@ class SyntheticTarget(Target):
         # }
 
         # render the scene
-        rendered_mesh, zbuf = self.scene_dict['renderer'](obj_mesh)
+        rendered_mesh, zbuf = self.renderer(obj_mesh)
 
         rendered_mesh = rendered_mesh[..., 1]
 
@@ -119,7 +194,7 @@ class SyntheticTarget(Target):
             depth_pred_i = depth_pred[i].detach().cpu().numpy()
             depth_pred_i[depth_pred_i < 0] = 0
 
-            depth_gt = self.scene_dict['scene_depth'][i].detach().cpu().numpy()
+            depth_gt = self.scene_depth[i].detach().cpu().numpy()
             depth_gt[depth_gt < 0] = 0
 
             abs_diff = np.abs(depth_gt - depth_pred_i)
@@ -139,3 +214,38 @@ class SyntheticTarget(Target):
             ax.axis('off')
             plt.savefig(out_path)
             plt.close(fig)
+
+    def render_image(self, input_params_dict, rotation_matrix,
+                                 translation_offset=None, image_ind=0):
+
+        device = self.device
+
+        obj_mesh = self.calculate_mesh_from_input_dict(input_params_dict, rotation_matrix, translation_offset)
+
+        renderer = copy.deepcopy(self.renderer)
+        renderer.rasterizer.cameras = renderer.rasterizer.cameras[image_ind]
+        num_views = 1
+        obj_mesh = obj_mesh.extend(num_views)
+
+
+
+        # self.scene_dict contains:
+        # {
+        #     'scene_pcd',
+        #     'scene_mask',
+        #     'scene_depth',
+        #     'renderer'
+        # }
+
+        # render the scene
+        rendered_mesh, zbuf = renderer(obj_mesh)
+
+        rendered_mesh = rendered_mesh[..., 1]
+
+        mesh_mask = rendered_mesh != 0
+
+        depth_pred = zbuf[..., 0]
+
+        depth_pred_i = depth_pred[0].detach().cpu().numpy()
+
+        return depth_pred_i

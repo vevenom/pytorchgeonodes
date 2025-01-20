@@ -2,6 +2,7 @@ from pytorch3d.structures import Meshes, join_meshes_as_scene
 from pytorch3d.transforms import Rotate, Translate, Scale, Transform3d, euler_angles_to_matrix
 
 from PytorchGeoNodes.Nodes.Node import *
+from PytorchGeoNodes.Nodes.PrimitiveMesh import PrimitiveMesh, join_cloned_verts_faces
 
 class NodeInstanceOnPointsString:
     Points_str = 'Points'
@@ -13,7 +14,7 @@ class NodeInstanceOnPointsString:
     Scale_str = 'Scale'
 
 class NodeInstanceOnPoints(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Instance on Points node adds a reference to a geometry to each of the points present in the input geometry.
         Instances are a fast way to add the same geometry to a scene many times without duplicating the underlying data.
@@ -25,7 +26,7 @@ class NodeInstanceOnPoints(Node):
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
         print('Creating NodeInstanceOnPoints')
 
         self.cached_output = None
@@ -54,19 +55,15 @@ class NodeInstanceOnPoints(Node):
         assert torch.all(pick_instance == False), 'Pick = True not supported yet'
         assert torch.all(instance_index == 0), 'Instance Index != 0 not supported yet'
 
-        start = torch.cuda.Event(enable_timing=True)
-        end = torch.cuda.Event(enable_timing=True)
-
         # copy instance for each point
         meshes = []
 
-        start.record()
-
         for mesh_i, mesh in enumerate(instance):
-            assert isinstance(mesh, Meshes), 'Instance must be a mesh'
+            assert isinstance(mesh, PrimitiveMesh), 'Geometry must be a PrimitiveMesh, got {}'.format(type(mesh))
+            verts = mesh.verts
+            faces = mesh.faces
 
-            verts = mesh.verts_packed()
-            faces = mesh.faces_packed()
+            assert verts.shape[0] == mesh.verts.shape[0], 'Batch size > 1 not supported yet'
 
             rotation_i = rotation[mesh_i]
             scale_i = scale[mesh_i]
@@ -75,7 +72,7 @@ class NodeInstanceOnPoints(Node):
             points_i = torch.zeros_like(points[mesh_i]) - points[mesh_i]
             points_i[..., 0] = -points_i[..., 0]
 
-            v = verts.expand(points_i.shape[0], verts.shape[0], verts.shape[1])
+            v = verts.expand(points_i.shape[0], verts.shape[1], verts.shape[2])
             r = rotation_i.expand(points_i.shape[0], rotation_i.shape[1])
             s = scale_i.expand(points_i.shape[0], scale_i.shape[1])
 
@@ -88,16 +85,13 @@ class NodeInstanceOnPoints(Node):
             transform = Transform3d().compose(scale_tf, rotation_tf, translation_tf).to(self.device)
             v = transform.transform_points(v)
 
-            faces = faces[None].expand(points_i.shape[0], faces.shape[0], faces.shape[1])
-
-            mesh_p = Meshes(verts=v, faces=faces)
+            # faces = faces[None].expand(points_i.shape[0], faces.shape[1], faces.shape[2])
+            # mesh_p = mesh.clone()
+            # mesh_p.verts = v
+            # mesh_p.faces = faces
+            mesh_p = join_cloned_verts_faces(v, faces, mesh, 'InstanceOnPoints')
 
             meshes.append(mesh_p)
-        end.record()
-
-        torch.cuda.synchronize()
-        # if start.elapsed_time(end) > 3:
-        # print('**********Time needed for instance on points: {}'.format(start.elapsed_time(end)))
 
         inputs_dict[self.name][NodeStrings.OUT_str + 'Instances'] = meshes
 

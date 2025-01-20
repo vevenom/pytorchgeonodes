@@ -1,13 +1,26 @@
 import sys
 import os
 from contextlib import contextmanager
-
+import random
+import torch
+import numpy as np
 class DictAsMember(dict):
     def __getattr__(self, name):
         value = self[name]
         if isinstance(value, dict):
             value = DictAsMember(value)
         return value
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
+def set_seed(seed):
+    random.seed(seed)
+    torch.manual_seed(seed=seed)
+    np.random.seed(seed=seed)
 
 @contextmanager
 def stdout_redirected( to=os.devnull):

@@ -1,7 +1,6 @@
-from pytorch3d.structures import Meshes
-
 from PytorchGeoNodes.Nodes.Node import *
-
+# from PytorchGeoNodes.Nodes.PrimitiveMesh import PrimitiveMesh
+from PytorchGeoNodes.Nodes.PrimitiveGeometry import PrimitiveGeometry
 
 class NodeSwitchStrings:
     Switch_str = 'Switch'
@@ -13,14 +12,14 @@ class NodeSwitchStrings:
 
 
 class NodeSwitch(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Switch node outputs one of two inputs depending on a condition.
         Only the input that is passed through the node is computed.
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         self.switch_type = bpy_node.input_type
 
@@ -52,31 +51,33 @@ class NodeSwitch(Node):
         if self.switch_type == NodeStrings.GEOMETRY_type_str:
             switch_bool = inputs_dict[self.name][NodeStrings.IN_str +
                                                  NodeSwitchStrings.Switch_001_str][:, 0]
+            switch_bool = switch_bool.to(torch.bool)
 
             true_values = inputs_dict[self.name][NodeStrings.IN_str +
                                                  NodeSwitchStrings.True_006_str]
             false_values = inputs_dict[self.name][NodeStrings.IN_str +
                                                   NodeSwitchStrings.False_006_str]
 
-            meshes = []
+
+            primitives = []
             for i in range(switch_bool.shape[0]):
                 if switch_bool[i]:
                     if true_values is None:
-                        meshes.append(Meshes(verts=[], faces=[]).to(switch_bool.device))
+                        primitives.append(PrimitiveGeometry.create_empty(self.device))
                     else:
-                        meshes.append(true_values[i])
+                        primitives.append(true_values[i])
                 else:
                     if false_values is None:
-                        meshes.append(Meshes(verts=[], faces=[]).to(switch_bool.device))
+                        primitives.append(PrimitiveGeometry.create_empty(self.device))
                     else:
-                        meshes.append(false_values[i])
+                        primitives.append(false_values[i])
 
             # TODO: Is it always called Output_006?
-            inputs_dict[self.name][NodeStrings.OUT_str + 'Output_006'] = meshes
+            inputs_dict[self.name][NodeStrings.OUT_str + 'Output_006'] = primitives
         elif self.switch_type == NodeStrings.FLOAT_type_str:
             switch_bool = inputs_dict[self.name][NodeStrings.IN_str +
                                                  NodeSwitchStrings.Switch_str]
-
+            switch_bool = switch_bool.to(torch.bool)
 
             # print(inputs_dict[self.name])
             # print(inputs_dict[self.name].keys())
@@ -93,6 +94,7 @@ class NodeSwitch(Node):
         elif self.switch_type == NodeStrings.VECTOR_type_str:
             switch_bool = inputs_dict[self.name][NodeStrings.IN_str +
                                                  NodeSwitchStrings.Switch_str][:, 0]
+            switch_bool = switch_bool.to(torch.bool)
 
             true_values = inputs_dict[self.name][NodeStrings.IN_str + 'True_003']
             false_values = inputs_dict[self.name][NodeStrings.IN_str + 'False_003']

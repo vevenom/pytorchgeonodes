@@ -8,7 +8,7 @@ class NodeVectMathStrings:
 
 
 class NodeOperatorDivide(nn.Module):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node):
         """
         The Divide Operator divides two numbers.
 
@@ -32,13 +32,13 @@ class NodeOperatorDivide(nn.Module):
         return res
 
 class NodeVectMath(Node):
-    def __init__(self, bpy_node: bpy.types.GeometryNode):
+    def __init__(self, bpy_node, config):
         """
         The Vector Math node performs the selected math operation on the input vectors.
 
         :param bpy_node:
         """
-        super().__init__(bpy_node)
+        super().__init__(bpy_node, config)
 
         print('Creating NodeVectMath')
 
