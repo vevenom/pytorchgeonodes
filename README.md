@@ -56,7 +56,7 @@ python preprocess_dv_values.py --category chair
 Run the following command to reconstruct shape parameters of the chairs using genetic algorithm. Use ```--skip_refinement``` to run without refinement:
 
 ```bash
-python reconstruct_synthetic_objects.py --category chair --dataset_path demo_outputs/demo_dataset --experiment_path demo_outputs/demo_dataset --method cd
+python reconstruct_synthetic_objects.py --category chair --dataset_name synthetic_dataset --experiment_path synthetic_experiments/ --method genetic --disable_prior --disable_post_tree
 ```
 
 Alternatively, you can change the method parameter to run reconstruction using coordinate descent baseline:
