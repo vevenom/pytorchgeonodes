@@ -392,7 +392,7 @@ class GeometryNodes(torch.nn.Module):
 
         return inputs_dict, outputs
 
-    def outputs_to_o3d(self, outputs, b_index=0):
+    def outputs_to_o3d(self, outputs, b_index=0, compute_normals=True):
         '''
         Convert outputs from forward pass to Open3D objects.
 
@@ -411,6 +411,8 @@ class GeometryNodes(torch.nn.Module):
                 o3d_mesh = o3d.geometry.TriangleMesh()
                 o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
                 o3d_mesh.triangles = o3d.utility.Vector3iVector(faces_np)
+                if compute_normals:
+                    o3d_mesh.compute_vertex_normals()
 
                 output_o3d.append(o3d_mesh)
             outputs_o3d.append(output_o3d)

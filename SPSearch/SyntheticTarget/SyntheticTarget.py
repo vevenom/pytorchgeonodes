@@ -2,26 +2,14 @@ import torch
 import numpy as np
 import os
 import copy
-from multiprocessing.managers import BaseManager as mpBaseManager
-from multiprocessing.managers import NamespaceProxy as mpNamespaceProxy
 
 from pytorch3d.transforms import Transform3d
 from pytorch3d.transforms import Translate
 from pytorch3d.structures import Meshes
-from pytorch3d.ops import sample_points_from_meshes, knn_points, ball_query
+from pytorch3d.ops import sample_points_from_meshes
 from pytorch3d.loss.chamfer import chamfer_distance
 
 from SPSearch.Target import Target
-from SPSearch.SyntheticTarget.LossBatched import LossBatched
-from SPSearch.SyntheticTarget.LossBatchedSlow import LossBatchedSlow
-
-class SyntheticTargetClassProxy(mpNamespaceProxy):
-    _exposed_ = ('__getattribute__', '__setattr__', '__delattr__', 'calculate_cost_from_input_dict')
-
-    def calculate_cost_from_input_dict(self, input_params_dict, rotation_matrix, translation_offset):
-        callmethod = object.__getattribute__(self, '_callmethod')
-        return callmethod('calculate_cost_from_input_dict',
-                          args=(input_params_dict, rotation_matrix, translation_offset,))
 
 class SyntheticTarget(Target):
     def __init__(self, scene_dict,
@@ -37,9 +25,6 @@ class SyntheticTarget(Target):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        self.fast_loss = LossBatchedSlow(settings.loss)
-        self.full_loss = LossBatchedSlow(settings.loss)
-
         self.optimize_translation = False
 
         self.scene_name = scene_dict['scene_name']
@@ -49,11 +34,6 @@ class SyntheticTarget(Target):
         self.scene_pcd = scene_dict['scene_pcd']
 
         print('SytheticTarget initialized with scene: {}'.format(scene_dict['scene_name']))
-
-    def get_class(self):
-        return SyntheticTarget
-    def get_class_proxy_(self):
-        return SyntheticTargetClassProxy
 
     def get_input_attributes(self):
         scene_dict = {
@@ -74,8 +54,6 @@ class SyntheticTarget(Target):
         (cd_loss_x, cd_loss_y) = chamfer_distance(scene_dict['scene_pcd'], mesh_pcd,
                                                   batch_reduction=None,
                                                   point_reduction=None,
-                                                  # x_normals=self.surface_points_normals[None],
-                                                  # y_normals=mesh_normals,
                                                   norm=1,
                                                   single_directional=False)[0]  # / self.cd_clamp
 
@@ -87,21 +65,9 @@ class SyntheticTarget(Target):
     def calculate_mesh_from_input_dict(self, input_params_dict, rotation_matrix, translation_offset=None):
         device = self.device
 
-        # # calculate time needed for geometry nodes
-        # start = torch.cuda.Event(enable_timing=True)
-        # end = torch.cuda.Event(enable_timing=True)
-        #
-        # start.record()
         _, outputs = self.geometry_nodes.forward(input_params_dict, transform2blender_coords=True)
         obj_mesh = outputs[0][0][0]
         obj_mesh = Meshes(verts=obj_mesh.verts, faces=obj_mesh.faces)
-
-        # end.record()
-        #
-        # torch.cuda.synchronize()
-        #
-        # print('Time needed for geometry nodes: {}'.format(start.elapsed_time(end)))
-
         verts = obj_mesh.verts_packed()
         faces = obj_mesh.faces_packed()
 
@@ -132,17 +98,8 @@ class SyntheticTarget(Target):
         return obj_mesh
 
     def calculate_cost_from_input_dict(self, input_params_dict, rotation_matrix, translation_offset=None):
-        device = self.device
-
-        # calculate time needed for loss function
-        # start = torch.cuda.Event(enable_timing=True)
-        # end = torch.cuda.Event(enable_timing=True)
 
         obj_mesh = self.calculate_mesh_from_input_dict(input_params_dict, rotation_matrix, translation_offset)
-
-#         start.record()
-#         loss = self.scannotate_loss(obj_mesh, scene_frame_iterator,
-#                                     self.scan2cad_instance.scannet_instance.scannet_pose_to_py3d)
 
         scene_dict = {
             'scene_pcd': self.scene_pcd,
@@ -151,15 +108,7 @@ class SyntheticTarget(Target):
             'renderer': self.renderer
         }
 
-        # if use_fast_loss:
-        #     loss = self.fast_loss(obj_mesh, scene_dict)
-        # else:
-        #     loss = self.full_loss(obj_mesh, scene_dict)
-#         end.record()
         loss = self.loss(obj_mesh, scene_dict)
-
-#         torch.cuda.synchronize()
-        # print('Time needed for loss function: {}'.format(start.elapsed_time(end)))
 
         return loss
 
@@ -212,30 +161,17 @@ class SyntheticTarget(Target):
             fig, ax = plt.subplots(1, 1, figsize=(10, 10))
             ax.imshow(vis_img)
             ax.axis('off')
-            plt.savefig(out_path)
+            plt.savefig(out_path, bbox_inches='tight', pad_inches=0)
             plt.close(fig)
 
     def render_image(self, input_params_dict, rotation_matrix,
                                  translation_offset=None, image_ind=0):
-
-        device = self.device
-
         obj_mesh = self.calculate_mesh_from_input_dict(input_params_dict, rotation_matrix, translation_offset)
 
         renderer = copy.deepcopy(self.renderer)
         renderer.rasterizer.cameras = renderer.rasterizer.cameras[image_ind]
         num_views = 1
         obj_mesh = obj_mesh.extend(num_views)
-
-
-
-        # self.scene_dict contains:
-        # {
-        #     'scene_pcd',
-        #     'scene_mask',
-        #     'scene_depth',
-        #     'renderer'
-        # }
 
         # render the scene
         rendered_mesh, zbuf = renderer(obj_mesh)

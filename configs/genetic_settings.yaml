@@ -1,20 +1,20 @@
-population_size: 32
-#num_parents: 64
-num_offsprings: 64
-init_population_size: 100
+population_size: 64
+num_offsprings: 128
+init_population_size: 500
 select_criterion: 'keep_n_best' # 'avg' 'keep_n_best'
 remove_bad_decision_values: True
 incoming_population_size: 32
-init_mutation_rate_offspring: 0.5
-init_mutation_rate_param: 0.5
-final_mutation_rate_offspring: 0.5
-final_mutation_rate_param: 0.5
+init_mutation_rate_offspring: 0.9
+init_mutation_rate_param: 0.9
+final_mutation_rate_offspring: 0.1
+final_mutation_rate_param: 0.1
 max_offsprings_per_parent: 10000 # set to high number for no effect
 init_mutation_noise: 0.05
 final_mutation_noise: 0.05
+translation_mutation_noise: 0.05
 add_random_individuals_every: 0
-num_generations: 20
-refine_every_n_generations: 1
+num_generations: 50
+refine_every_n_generations: 5
 #convergence_threshold: 0.00
 max_processes_num: 3
 load_ordered_dv: True
@@ -22,15 +22,19 @@ posterior_tree:
     use_prior_distribution: True
     use_posterior_tree: True
     share_children_nodes: True
+probabilistic_model:
+    use_probabilistic_model: True
+    path: 'output_models/probabilistic_model4/'
 refinement:
     use_fast_loss: True
     full_refinement_frequency: 0
+    use_refinement_break: True
     refinement_probability: 0.2
     optimize_threshold: 0.0   # This gets replaced anyways
     optimize_steps: 50
     optimizer_lr: 0.01
     optimizer: 'Adam' # 'Adam' or 'SGD' or 'Lion'
-    final_optimization_steps: 500
+    final_optimization_steps: 200
     final_optimizer_lr: 0.01
 target:
     loss:

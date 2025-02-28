@@ -28,10 +28,6 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_path', type=str, help='Experiments path')
     parser.add_argument('--skip_refinement', action='store_true',
                         help='Skip refinement step')
-    parser.add_argument('--disable_prior', action='store_true',
-                        help='Disable prior distribution during genetic search')
-    parser.add_argument('--disable_post_tree', action='store_true',
-                        help='Disable posterior tree during genetic search')
     parser.add_argument('--method', type=str,
                         help='Search method to use',
                         choices=['cd', 'genetic'])
@@ -48,9 +44,7 @@ if __name__ == '__main__':
     experiment_path = args.experiment_path
     experiment_path = os.path.join(general_config.experiments_path_base, experiment_path)
 
-    synthetic_dataset_path = os.path.join(experiment_path,
-                                          dataset_name, object_category)
-
+    synthetic_dataset_path = os.path.join(experiment_path, dataset_name, object_category)
     experiment_path = os.path.join(experiment_path, dataset_name)
 
     scenes_names = os.listdir(synthetic_dataset_path)
@@ -94,15 +88,6 @@ if __name__ == '__main__':
             genetic_settings['refine_every_n_generations'] = 0
             genetic_settings['refinement']['final_optimization_steps'] = 0
             genetic_settings['refinement']['optimize_steps'] = 0
-        if args.disable_post_tree:
-            genetic_settings['posterior_tree']['use_posterior_tree'] = False
-        if args.disable_prior:
-            genetic_settings['posterior_tree']['use_prior_distribution'] = False
-
-        if not genetic_settings.posterior_tree.use_prior_distribution:
-            experiment_path = experiment_path + '_no_prior'
-        if not genetic_settings.posterior_tree.use_posterior_tree:
-            experiment_path = experiment_path + '_no_post'
 
         if genetic_settings.refine_every_n_generations == 0:
             experiment_path = experiment_path + '_no_refinement'
