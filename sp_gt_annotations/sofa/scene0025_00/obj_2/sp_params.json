@@ -1,0 +1,30 @@
+{
+  "input_dict": {
+    "Width": 1.15,
+    "Is L-Shaped": false,
+    "Has Back": true,
+    "L Depth": 0.63,
+    "Flip L Around Y": false,
+    "Depth": 0.6,
+    "Back Height": 0.3,
+    "Has Left Arm": true,
+    "Has Right Arm": true,
+    "Height": 0.3,
+    "Arm Height": 0.6,
+    "Back Over-Width Scale": 0.0,
+    "Has Arm Legs": true,
+    "Has Legs": false,
+    "Arm Depth": 1.0,
+    "Leg Size": 0.01,
+    "Leg Height": 0.05,
+    "Arm Width": 0.1,
+    "Back Depth": 0.12,
+    "L Width": 0.46
+  },
+  "rotation_angle_y": 0.01,
+  "translation_offset": [
+    -0.02,
+    -0.06,
+    0.002
+  ]
+}

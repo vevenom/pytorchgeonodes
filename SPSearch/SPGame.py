@@ -12,7 +12,6 @@ class SPGame(ProposalGame, torch.nn.Module):
     def __init__(self, args_list):
         torch.nn.Module.__init__(self)
 
-        # self.geometry_nodes = None  # type: GeometryNodes
         self.decision_var_list = None  # type: [DecisionVariable]
         self.target = None  # type: Target
 
@@ -52,9 +51,6 @@ class SPGame(ProposalGame, torch.nn.Module):
         if prop.type not in NodesTypes.SPECIAL_NODES_LIST:
             self.prop_seq.append(prop)
         elif prop.type == NodesTypes.ENDNODE:
-            # prop is AccumulatorProp
-            # print(self.prop_seq)
-            # self.prop_seq = prop.get_proposals()
             self.prop_seq = copy.deepcopy(self.prop_seq)
 
     def calc_score_from_proposals(self, prop_seq=None, props_optimizer=None):

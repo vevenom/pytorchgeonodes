@@ -8,3 +8,5 @@ output*
 .idea
 *__pycache__/*
 *.pyc
+reconstruct_scannotate_objects_ignore_annotations.py
+valid_scenes/

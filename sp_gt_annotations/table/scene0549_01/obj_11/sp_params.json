@@ -1,0 +1,26 @@
+{
+  "input_dict": {
+    "Width": 0.666,
+    "Height": 0.665,
+    "Depth": 0.66,
+    "Legs Type": 1,
+    "Mid Leg X Scale": 0.353,
+    "Mid Leg Y Scale": 0.291,
+    "Top Shape": 1,
+    "Legs Offset Y": 0.008,
+    "Legs Offset X": 0.597,
+    "Legs Scale Y": 0.262,
+    "Has Mid Board": true,
+    "Mid Board Z Scale": 0.495,
+    "Has Cabinet Leg": true,
+    "Cabinet Width Scale": 0.466,
+    "Top Thickness": 0.035,
+    "Legs Scale X": 0.1
+  },
+  "rotation_angle_y": -0.186,
+  "translation_offset": [
+    0.017,
+    -0.013,
+    0.026
+  ]
+}

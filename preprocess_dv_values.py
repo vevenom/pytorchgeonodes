@@ -24,6 +24,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Generate decision variable tree for a given object category')
     parser.add_argument('--category', type=str, default='cabinet', help='Object category')
+    parser.add_argument('--calc_var', type=bool, default=False,
+                        help='Calculate variance for decision variables')
     args = parser.parse_args()
 
     object_category = args.category
@@ -34,9 +36,9 @@ if __name__ == '__main__':
     general_config = DictAsMember(general_config)
 
     processed_data_path = general_config.processed_data_path
-    dv_ordered_path = os.path.join(general_config.experiments_path_base,
-                                   processed_data_path, object_category + '_ord_dv.pickle')
-    os.makedirs(os.path.dirname(dv_ordered_path), exist_ok=True)
+    dv_processed_path = os.path.join(general_config.experiments_path_base,
+                                     processed_data_path, object_category + '_ord_dv.pickle')
+    os.makedirs(os.path.dirname(dv_processed_path), exist_ok=True)
 
     sp_config_path = f'configs_shape_programs/sp_{args.category}.json'
     shape_program = BlenderShapeProgram(config_path=sp_config_path)
@@ -48,17 +50,18 @@ if __name__ == '__main__':
     geometry_nodes.to(device)
 
     print('Ordering decision variables for object category:', args.category)
-    print('Resulting ordered decision variables will be saved to:', dv_ordered_path)
+    print('Resulting ordered decision variables will be saved to:', dv_processed_path)
 
     decision_variables = DecisionVariable.generate_dec_vars_from_params_tree(params_tree, device)
 
-    ordered_decision_variables = \
-        DecisionVariable.preprocess_dv(
-            params_tree, decision_variables, geometry_nodes)
+    if args.calc_var:
+        decision_variables = \
+            DecisionVariable.preprocess_dv(
+                params_tree, decision_variables, geometry_nodes)
 
     os.makedirs(processed_data_path, exist_ok=True)
-    with open(dv_ordered_path, 'wb') as f:
-        pickle.dump(ordered_decision_variables, f)
+    with open(dv_processed_path, 'wb') as f:
+        pickle.dump(decision_variables, f)
 
 
 

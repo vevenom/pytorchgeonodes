@@ -148,7 +148,7 @@ class DecisionVariable(torch.nn.Module):
 
     @staticmethod
     def generate_dec_vars_from_params_tree(params_tree: ShapeParamsTree, device,
-                                           step_size=0.2, cluster_num=4,
+                                           step_size=0.05, cluster_num=4,
                                            normalize_params=True, add_rotation_nodes=True):
 
         dec_vars = []

@@ -12,7 +12,6 @@ class OcclusionGrid(torch.nn.Module):
     def __init__(self, surface_points=None, other_surface_points=None):
         super(OcclusionGrid, self).__init__()
 
-        # self.other_surface_points = other_surface_points
         surface_knn = knn_points(other_surface_points[None], surface_points[None], K=1, return_nn=False, norm=1)
         surface_knn_dists = surface_knn.dists[0]
         close_nn = surface_knn_dists <= 0.5
@@ -21,10 +20,8 @@ class OcclusionGrid(torch.nn.Module):
         self.object_pcd = surface_points
         if surface_points is None:
             self.surface_points_3d = torch.zeros((0,3))
-            self.surface_points_normals = torch.zeros((0,3))
         else:
             self.surface_points_3d = surface_points
-
         self.occluding_points_3d = torch.zeros((0, 3))
         self.occluding_points_values = torch.zeros((0, 1))
         self.occluded_surface_points = torch.zeros((0, 3))
@@ -37,19 +34,15 @@ class OcclusionGrid(torch.nn.Module):
 
         self.epsilon = 1e-3
         self.max_depth = 3.0
-        self.voxel_size_surface = 0.02  # 1cm
-        self.voxel_size_occluder = 0.05
+        self.voxel_size_surface = 0.01  # 1cm
+        self.voxel_size_occluder = 0.05 # 5cm use smaller grid for faster loss calculation
+
         self.occluder_step_size = self.voxel_size_occluder # 0.05
         self.cd_clamp = 0.1
         self.distance_clamp = 0.3
         self.max_ray_offset = 2.
-        self.min_ray_offset = -0.3
-        self.normals_nn_number = 10
-        self.ray_offsets_positive = torch.arange(0.0, self.max_ray_offset, self.occluder_step_size)
-        self.ray_offsets_negative = torch.arange(self.min_ray_offset, self.epsilon, self.occluder_step_size)
-
+        self.ray_offsets_positive = torch.arange(self.voxel_size_occluder + 0.01, self.max_ray_offset, self.occluder_step_size)
         self.voting_census = 1
-        # self.min_value = self.epsilon
 
     def to(self, device):
         super(OcclusionGrid, self).to(device)
@@ -59,14 +52,12 @@ class OcclusionGrid(torch.nn.Module):
         self.occluding_points_values = self.occluding_points_values.to(device)
         self.occluded_surface_points = self.occluded_surface_points.to(device)
         self.ray_offsets_positive = self.ray_offsets_positive.to(device)
-        self.ray_offsets_negative = self.ray_offsets_negative.to(device)
         self.floor_plane = self.floor_plane.to(device)
 
     def visualize_loss(self, obj_mesh):
 
         mesh_pcd = (
             sample_points_from_meshes(obj_mesh, num_samples=10000))
-        mesh_pcd = torch.cat((mesh_pcd, obj_mesh.verts_packed()[None]), dim=1)
 
         surface_points_3d_np = self.surface_points_3d.cpu().numpy()
         o3d_surface_points_3d = o3d.geometry.PointCloud()
@@ -77,6 +68,9 @@ class OcclusionGrid(torch.nn.Module):
         occluding_points_3d = self.occluding_points_3d.cpu().numpy()
         occluder_sp_colors = np.ones_like(occluding_points_3d) * np.array([[1., 0, 0]])
 
+        # occluder_sp_colors = occluder_sp_colors * np.clip(occluding_points_3d_values, a_max=0.3, a_min=None) / 0.3
+        # occluding_points_3d = occluding_points_3d[occluding_points_3d_values[..., 0] > 0.5, :]
+        # occluder_sp_colors = occluder_sp_colors[occluding_points_3d_values[..., 0] > 0.5, :]
         o3d_occluder_sp_pcd = o3d.geometry.PointCloud()
         o3d_occluder_sp_pcd.points = o3d.utility.Vector3dVector(occluding_points_3d)
         o3d_occluder_sp_pcd.colors = o3d.utility.Vector3dVector(occluder_sp_colors)
@@ -84,8 +78,8 @@ class OcclusionGrid(torch.nn.Module):
         o3d_obj_mesh_3d = o3d.geometry.PointCloud()
         o3d_obj_mesh_3d.points = o3d.utility.Vector3dVector(mesh_pcd[0].detach().cpu().numpy())
 
-        # o3d.visualization.draw_geometries([o3d_surface_points_3d, o3d_obj_mesh_3d])
-        o3d.visualization.draw_geometries([o3d_surface_points_3d, o3d_occluder_sp_pcd, o3d_obj_mesh_3d])
+        o3d.visualization.draw_geometries([o3d_surface_points_3d, o3d_obj_mesh_3d])
+        # o3d.visualization.draw_geometries([o3d_surface_points_3d, o3d_occluder_sp_pcd, o3d_obj_mesh_3d])
 
         return o3d_surface_points_3d
 
@@ -93,93 +87,57 @@ class OcclusionGrid(torch.nn.Module):
 
         mesh_pcd = (
             sample_points_from_meshes(obj_mesh, num_samples=20000))
-        mesh_pcd = torch.cat((mesh_pcd, obj_mesh.verts_packed()[None]), dim=1)
-
-        mesh_verts_pcd = obj_mesh.verts_packed()[None]
 
         grid_points = self.occluding_points_3d
-        grid_values = self.occluding_points_values
-        # grid_grads = self.occluding_points_gradients
-        grid_surface_points = self.occluded_surface_points
 
         (cd_loss_x, cd_loss_y) = chamfer_distance(self.surface_points_3d[None], mesh_pcd,
                                                 batch_reduction=None,
                                                 point_reduction=None,
-                                                # x_normals=self.surface_points_normals[None],
-                                                # y_normals=mesh_normals,
                                                 norm=1,
-                                                single_directional=False)[0]  # / self.cd_clamp
+                                                single_directional=False)[0]
 
-        cd_loss_x_clamped = torch.clamp_max(cd_loss_x, self.cd_clamp) #/ self.cd_clamp
-        cd_loss_y_clamped = torch.clamp_max(cd_loss_y, self.cd_clamp) #/ self.cd_clamp
-        cd_loss_y_clamp_min = torch.clamp_min(cd_loss_y, 0.3) - 0.3
+        cd_loss = 1.0 * cd_loss_x.mean()
 
-        cd_loss = 1.0 * cd_loss_x.mean() #+ 1.0 * cd_loss_y_clamp_min.mean()
-
-        # cd_loss_verts = chamfer_distance(mesh_verts_pcd, self.surface_points_3d[None],
-        #                                           batch_reduction=None,
-        #                                           point_reduction=None,
-        #                                           # x_normals=self.surface_points_normals[None],
-        #                                           # y_normals=mesh_normals,
-        #                                           norm=1,
-        #                                           single_directional=True)[0]  # / self.cd_clamp
-
-        mesh_knn = knn_points(mesh_pcd, grid_points[None], K=1, return_nn=False, norm=1)
-        # mesh_knn = ball_query(mesh_pcd, grid_points[None], K=1, radius=self.voxel_size_occluder)
+        mesh_knn = knn_points(mesh_pcd, grid_points[None], K=1, return_nn=False, norm=2)
         mesh_knn_dists = mesh_knn.dists[0]
-        # grid_nn_idx = mesh_knn.idx[0]
-        # grid_nn_surface_points = grid_surface_points[grid_nn_idx[:, None]][:,0,:] # [num_points, knn_num, 3]
 
-        occlusion_cost2 = (mesh_knn_dists < 1 * self.voxel_size_occluder)[..., None] * cd_loss_y[None] ** 2
+        is_mesh_on_g = (torch.sqrt(mesh_knn_dists) < 1 * self.voxel_size_occluder)[..., None]
+        occlusion_cost2 = is_mesh_on_g * cd_loss_y[None]
         occlusion_cost2 = occlusion_cost2.mean()
         occlusion_cost = occlusion_cost2
 
         bb = obj_mesh.get_bounding_boxes()  # (N, 3, 2)
         reconstructed_scale = (bb[..., 1] - bb[..., 0]) ** 2
         reconstructed_obj_center = (bb[..., 0] + bb[..., 1]) / 2
-        # print(bb)
-        # print(reconstructed_scale)
-        # print(reconstructed_obj_center)
         reconstructed_floor_plane = calculate_floor_plane(reconstructed_obj_center, reconstructed_scale)
 
-        # print('reconstructed_floor_plane', reconstructed_floor_plane)
-        # print('floor_plane', self.floor_plane)
+        support_plane_loss = torch.abs(self.floor_plane[-1] - reconstructed_floor_plane[-1])
 
-        support_plane_loss = (self.floor_plane[-1] - reconstructed_floor_plane[-1]) ** 2
-
-        loss = 1.0 * cd_loss + + 2. * occlusion_cost + 0.5 * support_plane_loss
+        loss = 1.0 * cd_loss + 0.5 * occlusion_cost + 0.01 * support_plane_loss
 
         return loss
 
     def calculate_loss_from_sampled_points(self, obj_pcd):
 
         grid_points = self.occluding_points_3d
-        grid_values = self.occluding_points_values
-        # grid_grads = self.occluding_points_gradients
-        grid_surface_points = self.occluded_surface_points
 
         (cd_loss_x, cd_loss_y) = chamfer_distance(self.surface_points_3d[None], obj_pcd,
                                                   batch_reduction=None,
                                                   point_reduction=None,
-                                                  # x_normals=self.surface_points_normals[None],
-                                                  # y_normals=mesh_normals,
                                                   norm=1,
                                                   single_directional=False)[0]  # / self.cd_clamp
-        cd_loss_x = torch.clamp_max(cd_loss_x, 0.1)
-        cd_loss_y = torch.clamp_max(cd_loss_y, 0.1)
+
         cd_loss = 1.0 * cd_loss_x.mean()
 
-        mesh_knn = knn_points(obj_pcd, grid_points[None], K=1, return_nn=False, norm=1)
-        # mesh_knn = ball_query(mesh_pcd, grid_points[None], K=1, radius=self.voxel_size_occluder)
+        mesh_knn = knn_points(obj_pcd, grid_points[None], K=1, return_nn=False, norm=2)
         mesh_knn_dists = mesh_knn.dists[0]
-        # grid_nn_idx = mesh_knn.idx[0]
-        # grid_nn_surface_points = grid_surface_points[grid_nn_idx[:, None]][:,0,:] # [num_points, knn_num, 3]
 
-        occlusion_cost2 = (mesh_knn_dists < 3 * self.voxel_size_occluder)[..., None] * cd_loss_y[None]
+        is_mesh_on_g = (torch.sqrt(mesh_knn_dists) < 1 * self.voxel_size_occluder)[..., None]
+        occlusion_cost2 = is_mesh_on_g * cd_loss_y[None]
         occlusion_cost2 = occlusion_cost2.mean()
         occlusion_cost = occlusion_cost2
 
-        loss = 1.0 * cd_loss + 1.0 * occlusion_cost
+        loss = 1.0 * cd_loss + 0.1 * occlusion_cost
 
         return loss
 
@@ -190,9 +148,7 @@ class OcclusionGrid(torch.nn.Module):
         o3d_surface_pcd.points = o3d.utility.Vector3dVector(self.surface_points_3d.cpu().numpy())
         o3d_surface_pcd.colors = o3d.utility.Vector3dVector(full_colors)
 
-        # occ_sp_diff = (occ_sp_diff / 0.1)
         occluding_points_3d = self.occluding_points_3d.cpu().numpy()
-        occluding_points_3d_values = self.occluding_points_values.cpu().numpy()
         occluder_sp_colors = np.ones_like(occluding_points_3d) * np.array([[1., 0, 0]])
 
         o3d_occluder_sp_pcd = o3d.geometry.PointCloud()
@@ -208,28 +164,8 @@ class OcclusionGrid(torch.nn.Module):
 
         print('Number of occluder points: ', occluding_points_3d.shape[0])
 
-        lines_p = np.concatenate([occluded_points_3d, occluding_points_3d], axis=0)
-        line_p0_ind = np.arange(0, occluding_points_3d.shape[0])
-        line_p1_ind = np.arange(occluding_points_3d.shape[0], 2 * occluding_points_3d.shape[0])
-        lines_p_inds = np.concatenate([line_p0_ind[:, None], line_p1_ind[:, None]], axis=1)
-
-        colors_p1 = np.zeros_like(occluding_points_3d) + np.array([[0.0, 0.5, 0]])
-        colors_p2 = np.zeros_like(occluding_points_3d) + np.array([[0.5, 0.0, 0.]])
-        lines_colors = np.concatenate([colors_p1, colors_p2], axis=0)
-        lines_pcd = o3d.geometry.PointCloud()
-        lines_pcd.points = o3d.utility.Vector3dVector(lines_p)
-        lines_pcd.colors = o3d.utility.Vector3dVector(lines_colors)
-
-        colors = np.zeros_like(occluded_points_3d)
-        line_set = o3d.geometry.LineSet(
-            points=o3d.utility.Vector3dVector(lines_p),
-            lines=o3d.utility.Vector2iVector(lines_p_inds),
-        )
-        line_set.colors = o3d.utility.Vector3dVector(colors)
-        #
-        # o3d.visualization.draw_geometries([line_set, o3d_occluder_sp_pcd, o3d_surface_pcd, o3d_other_surface_pcd])
-
-        o3d.visualization.draw_geometries([o3d_surface_pcd, o3d_other_surface_pcd])
+        # o3d.visualization.draw_geometries([o3d_surface_pcd, o3d_other_surface_pcd])
+        o3d.visualization.draw_geometries([o3d_surface_pcd, o3d_other_surface_pcd,o3d_occluder_sp_pcd])
 
     def calculate_grid(self, scene_batch):
 
@@ -238,36 +174,34 @@ class OcclusionGrid(torch.nn.Module):
         scene_depth = torch.clone(scene_batch['depth'])
         scene_depth[scene_depth >= self.max_depth] = 0
 
+        # Calculate surface points from 2D instance masks
         new_surface_points_3d, _ = self.calculate_points(scene_batch,
                                                       mask_gt,
                                                       scene_depth,
                                                       scene_depth,
                                                       voxel_size=self.voxel_size_surface)
         surface_points_3d_other_nn = knn_points(new_surface_points_3d[None], self.other_surface_points[None], K=1, norm=1)
-        #
         new_surface_points_3d = new_surface_points_3d[surface_points_3d_other_nn.dists[0,...,0] > 0.05, :]
 
+        # Remove noise (points that are far away from the original surface points)
         surface_points_3d_nn = knn_points(new_surface_points_3d[None], self.surface_points_3d[None], K=1, norm=1)
         new_surface_points_3d = new_surface_points_3d[surface_points_3d_nn.dists[0,...,0] < 0.2]
 
-        # self.surface_points_3d = new_surface_points_3d
+        # Concatenate initial and new surface points
         self.surface_points_3d = torch.cat([self.surface_points_3d, new_surface_points_3d], dim=0)
-        # print(self.surface_points_3d.shape)
 
         self.surface_points_3d = torch.round(self.surface_points_3d / self.voxel_size_surface) * self.voxel_size_surface
         self.surface_points_3d = torch.unique(self.surface_points_3d, dim=0)
 
-        # o3d.visualization.draw_geometries([o3d_surface_pcd])
         occluder_mask = torch.ones_like(mask_gt)
-
-        # ray_offsets = torch.cat((self.ray_offsets_positive, self.ray_offsets_negative), dim=0)
         ray_offsets = self.ray_offsets_positive
 
+        # Calculate occlusion grid from rays of different views
         camera_plane = 0.0
         for ro_ind in range(ray_offsets.shape[0]):
             ray_offset_depth = torch.clamp_min(scene_depth - ray_offsets[ro_ind], camera_plane)
-            # print(torch.unique(ray_offset_depth))
             scene_depth_masked = scene_depth.clone()
+
             scene_depth_masked[ray_offset_depth == camera_plane] = 0.
             ray_offset_depth[ray_offset_depth == camera_plane] = 0.
 
@@ -290,7 +224,6 @@ class OcclusionGrid(torch.nn.Module):
         occl_knn = knn_points(self.occluding_points_3d[None], comparison_points[None], K=1, return_nn=False)
         non_occluding_nn_idx = occl_knn.idx[0]
         non_occluding_nn_points = comparison_points[non_occluding_nn_idx.view(-1), :]
-        # occluding_points_gradients = occluding_points_3d - non_occluding_nn_points
         occluded_surface_points = non_occluding_nn_points
 
         self.occluded_surface_points = occluded_surface_points
@@ -313,13 +246,9 @@ class OcclusionGrid(torch.nn.Module):
             ys, xs = torch.meshgrid([y_arange, x_arange], indexing='ij')
 
             points_6d = torch.zeros((0, 6), device=device)
-            # points_3d = torch.zeros((0, 3), device=device)
-            points_3d_votes = torch.zeros((0), device=device)
 
             def project_image23d(pose, depth_map, mask, intrinsics_frame, ys, xs, voxel_size):
                 intrinsics_inv = torch.linalg.inv(intrinsics_frame)
-
-                # ys, xs = np.meshgrid(y_arange, x_arange, indexing='ij')
 
                 zs = depth_map[ys, xs]
                 zs = zs.reshape((-1, 1)).transpose(1, 0)
@@ -328,8 +257,6 @@ class OcclusionGrid(torch.nn.Module):
 
                 homo_ones = torch.ones_like(xs)
                 xy_homo = torch.concatenate([xs, ys, homo_ones], dim=0).to(torch.float32)
-                # xy_homo = xy_homo.reshape((-1, 3))
-                # xyzs = np.concatenate((xs[..., None], ys[..., None], zs[..., None]), axis=-1)
 
                 xyz_camera = zs * torch.matmul(intrinsics_inv, xy_homo)
                 xyz_camera_homo = torch.concatenate([xyz_camera, homo_ones], dim=0)
@@ -345,8 +272,6 @@ class OcclusionGrid(torch.nn.Module):
             for frame_ind in range(poses.shape[0]):
 
                 pose = poses[frame_ind]
-                # pose = pose.transpose(1, 0)
-                # pose = torch.linalg.inv(pose)
                 depth_map = occluder_depths[frame_ind]
                 occluded_depth_map = occluded_depths[frame_ind]
                 mask = masks[frame_ind]
@@ -362,7 +287,6 @@ class OcclusionGrid(torch.nn.Module):
                 xyz_global = torch.cat([xyz_global, xyz_global_occluded], dim=1)
 
                 xyz_global, xyz_global_object_counts = torch.unique(xyz_global, return_counts=True, dim=0)
-
                 points_6d = torch.concatenate([points_6d, xyz_global],
                                                      dim=0)
 
@@ -374,6 +298,3 @@ class OcclusionGrid(torch.nn.Module):
             occluded_points_3d = points_6d[:, 3:]
 
             return points_3d, occluded_points_3d
-
-
-

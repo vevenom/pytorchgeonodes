@@ -1,0 +1,34 @@
+{
+  "input_dict": {
+    "Seat Height": 0.55,
+    "Has Back": true,
+    "Legs Type": 0,
+    "Has Arms": false,
+    "Bottom Size Scale": 0.9,
+    "Seat Width": 0.466,
+    "Bottom Star": true,
+    "Star Rotation": 0.75,
+    "Seat Thickness": 0.091,
+    "Seat Depth": 0.4,
+    "Has Middle Support": true,
+    "Arm Height": 0.3,
+    "Backrest Scale": 0.799,
+    "Back Height": 0.35,
+    "Arm Depth Scale": 0.605,
+    "Backrest Offset Scale": 1.0,
+    "Middle Offset 2": 0.268,
+    "Middle Offset 1": 0.33,
+    "Legs Size": 0.063,
+    "Middle Support Thickness": 0.044,
+    "Bottom Thickness": 0.054,
+    "Back Thickness": 0.066,
+    "Arm Width": 0.113,
+    "Arm Thickness": 0.035
+  },
+  "rotation_angle_y": -3.077,
+  "translation_offset": [
+    0.02,
+    -0.1,
+    -0.054
+  ]
+}
