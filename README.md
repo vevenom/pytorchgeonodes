@@ -28,7 +28,7 @@ allows for reasoning about the semantic properties of reconstructed objects, edi
 ---
 ## Updates 
 
-- [ ] (Estimate April/Mai 2025)  Add integration of Gaussian Splatting into PyTorchGeoNodes.
+- [ ] (Estimate April/May 2025)  Add integration of Gaussian Splatting into PyTorchGeoNodes.
 - [x] Add experiments for fitting objects from ScanNet scenes and data preparation scripts
 - [x] January 2025 - Add genetic algorithm for fitting shape parameters to target 3D objects.
 - [x] September 2024 - First release that includes a baseline combining coordinate descent and gradient descent for fitting shape parameters to synthetic scenes
