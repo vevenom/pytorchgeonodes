@@ -54,35 +54,45 @@ class ScannotateDatasetMasks(object):
 
             yield frame_dict
 
-    def get_obj_pcd(self, scene_name, obj_idx):
+    def get_other_objs_pcd(self, scannet_instance, scene_name, obj_idx):
+        scene_pcd = scannet_instance.get_scene_pcd(scene_name)
+        axis_align_matrix = scannet_instance.get_scene_dict(scene_name)['axisAlignment']
+        scene_pcd = np.array(scene_pcd.points)
+        scene_pcd_homo = np.ones((scene_pcd.shape[0], 4))
+        scene_pcd_homo[:, :3] = scene_pcd
+        scene_pcd_homo = scene_pcd_homo.dot(axis_align_matrix.T)
+        scene_pcd_homo = scene_pcd_homo.dot(self.scannet_to_py3d_T.T)
+        scene_pcd = scene_pcd_homo[:, :3]
 
         scene_annotation_path = os.path.join(self.scannotate_path, scene_name, scene_name + '.pkl')
         with open(scene_annotation_path, 'rb') as f:
             scene_annotation = pickle.load(f)
 
-        # load point cloud using pytorch3d
-        ply_path = os.path.join(self.scannotate_path, scene_name, 'pcl_segmented.ply')
-
         obj_id = scene_annotation.obj_annotation_list[obj_idx].object_id
-        object_points = IO().load_pointcloud(ply_path).points_packed()
-        object_points = object_points[scene_annotation.inst_seg_3d == obj_id]
-
-        return object_points
-
-    def get_other_objs_pcd(self, scene_name, obj_idx):
-
-        scene_annotation_path = os.path.join(self.scannotate_path, scene_name, scene_name + '.pkl')
-        with open(scene_annotation_path, 'rb') as f:
-            scene_annotation = pickle.load(f)
-
-        # load point cloud using pytorch3d
-        ply_path = os.path.join(self.scannotate_path, scene_name, 'pcl_segmented.ply')
-
-        obj_id = scene_annotation.obj_annotation_list[obj_idx].object_id
-        other_obj_points = IO().load_pointcloud(ply_path).points_packed()
-        other_obj_points = other_obj_points[scene_annotation.inst_seg_3d != obj_id]
+        other_obj_points = scene_pcd[scene_annotation.inst_seg_3d != obj_id]
+        other_obj_points = torch.tensor(other_obj_points, dtype=torch.float32)
 
         return other_obj_points
+
+    def get_obj_pcd(self, scannet_instance, scene_name, obj_idx):
+        scene_pcd = scannet_instance.get_scene_pcd(scene_name)
+        axis_align_matrix = scannet_instance.get_scene_dict(scene_name)['axisAlignment']
+        scene_pcd = np.array(scene_pcd.points)
+        scene_pcd_homo = np.ones((scene_pcd.shape[0], 4))
+        scene_pcd_homo[:, :3] = scene_pcd
+        scene_pcd_homo = scene_pcd_homo.dot(axis_align_matrix.T)
+        scene_pcd_homo = scene_pcd_homo.dot(self.scannet_to_py3d_T.T)
+        scene_pcd = scene_pcd_homo[:, :3]
+
+        scene_annotation_path = os.path.join(self.scannotate_path, scene_name, scene_name + '.pkl')
+        with open(scene_annotation_path, 'rb') as f:
+            scene_annotation = pickle.load(f)
+
+        obj_id = scene_annotation.obj_annotation_list[obj_idx].object_id
+        object_points = scene_pcd[scene_annotation.inst_seg_3d == obj_id]
+        object_points = torch.tensor(object_points, dtype=torch.float32)
+
+        return object_points
 
     def get_frame_dict(self, scannet_instance: ScanNetRW, scene_name, obj_idx, frame_id):
         scene_dict = scannet_instance.get_scene_dict(scene_name)

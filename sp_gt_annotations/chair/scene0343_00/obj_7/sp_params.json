@@ -8,8 +8,8 @@
     "Has Arms": false,
     "Bottom Star": true,
     "Has Middle Support": true,
-    "Backrest Scale": 1.0,
-    "Backrest Offset Scale": 0.523,
+    "Backrest Scale": 0.8,
+    "Backrest Offset Scale": 1.0,
     "Star Rotation": 0.4,
     "Middle Offset 2": 0.246,
     "Middle Offset 1": 0.33,
@@ -18,7 +18,7 @@
     "Bottom Thickness": 0.05,
     "Seat Depth": 0.402,
     "Seat Thickness": 0.05,
-    "Back Height": 0.3,
+    "Back Height": 0.25,
     "Back Thickness": 0.062,
     "Arm Depth Scale": 0.668,
     "Arm Height": 0.244,
@@ -28,7 +28,7 @@
   "rotation_angle_y": 1.675,
   "translation_offset": [
     0.014,
-    0.043,
+    0.000,
     0.004
   ]
 }

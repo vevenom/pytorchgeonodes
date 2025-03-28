@@ -17,6 +17,7 @@ from pytorch3d.renderer import (
     RasterizationSettings, MeshRasterizer
 )
 
+from pgn_utils import *
 from ScanNet_renderer.Torch3DRenderer.pytorch3d_rasterizer_custom import MeshRendererViewSelection
 from ScanNet_renderer.Torch3DRenderer.SimpleShader import UVsCorrespondenceShader
 
@@ -192,7 +193,6 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-
 def main(args):
 
     config = load_config(args.config)['general']
@@ -203,6 +203,11 @@ def main(args):
     # scene_list = text_file.readlines()
     scene_list = os.listdir(SCANNET_base_path)
     scene_list.sort()
+
+    # Process only pgn g.t. scenes
+    if config['annotate_pgn_only']:
+        gt_scenes = get_pgn_annotated_gt_scenes()
+        scene_list = [scene for scene in scene_list if scene not in gt_scenes]
 
     #parameters for view selection
     img_scale = 1.
@@ -218,6 +223,8 @@ def main(args):
         pkl_out_path = os.path.join(SCANNOTATE_PATH,config['out_folder'], scene_name)
 
         if not os.path.exists(mesh_path):
+            continue
+        if os.path.exists(os.path.join(pkl_out_path, 'all_inst_seg_2d')):
             continue
 
         pkl_file = open(os.path.join(pkl_out_path, scene_name + '.pkl'), 'rb')

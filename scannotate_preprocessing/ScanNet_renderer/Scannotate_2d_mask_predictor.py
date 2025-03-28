@@ -21,6 +21,9 @@ import matplotlib.pyplot as plt
 import cv2
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 
+from pgn_utils import *
+
+
 parser = argparse.ArgumentParser(description="Object Mask Prediction for ScanNet")
 parser.add_argument("--config", type=str,
                     default=os.path.join(parent, 'config/0_Scannotate_masks.ini'),
@@ -712,7 +715,7 @@ def calc_masks_with_mult_pos_points(sam_masks_list, sam_score_list, box_dict_2d,
                 mask_tmp[int(point_[0, 1]), int(point_[0, 0])] = 0
 
                 mask_tmp = np.pad(mask_tmp, 1, mode='constant')
-                _, distance = medial_axis(mask_tmp, return_distance=True)
+                _, distance = medial_axis(mask_tmp, return_distance=True)all_inst_seg_2d
                 distance = distance[1:-1, 1:-1]
 
                 max_point = np.where(distance == np.max(distance))
@@ -795,6 +798,11 @@ def main(args):
     scene_list = os.listdir(SCANNET_base_path)
     scene_list.sort()
 
+    # Process only pgn g.t. scenes
+    if config['annotate_pgn_only']:
+        gt_scenes = get_pgn_annotated_gt_scenes()
+        scene_list = [scene for scene in scene_list if scene not in gt_scenes]
+
     img_scale = 1.
     inst_seg_2d_labels_list = config.getstruct('inst_seg_2d_labels_list')
 
@@ -815,6 +823,8 @@ def main(args):
 
         if not os.path.exists(os.path.join(pkl_out_path, scene_name + '.pkl')):
             continue
+        if os.path.exists(os.path.join(pkl_out_path, 'sam_results_path')):
+            continue
 
         pkl_file = open(os.path.join(pkl_out_path, scene_name + '.pkl'), 'rb')
         scene_obj = pickle.load(pkl_file)
@@ -824,14 +834,14 @@ def main(args):
             assert False
 
         sam_results_path = os.path.join(pkl_out_path, 'sam_results_path')
-        skel_results_path = os.path.join(pkl_out_path, 'skeleton_vis')
+        # skel_results_path = os.path.join(pkl_out_path, 'skeleton_vis')
         valid_maps_path = os.path.join(pkl_out_path, 'valid_maps')
 
         if not os.path.exists(sam_results_path):
             os.makedirs(sam_results_path)
 
-        if not os.path.exists(skel_results_path):
-            os.makedirs(skel_results_path)
+        # if not os.path.exists(skel_results_path):
+        #     os.makedirs(skel_results_path)
 
         if not os.path.exists(valid_maps_path):
             os.makedirs(valid_maps_path)

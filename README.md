@@ -1,7 +1,9 @@
 <div align="center">
 	<img width = "33%" src="__meta__/logo.jpg">
 
-<p align=center> <b> PyTorchGeoNodes is a differentiable module for reconstructing 3D objects from images using interpretable shape programs.
+[//]: # (<img width = "66%" src="__meta__/output_sofa.gif">)
+
+<p align=center> <b> PyTorchGeoNodes is a differentiable module for understanding 3D objects using interpretable shape programs.
 </b></p>
 
 <a href="https://vevenom.github.io/pytorchgeonodes/">Project Page</a> |
@@ -12,6 +14,9 @@
 
 ---
 ## Overview
+
+![output_sofa.gif](__meta__/output_sofa.gif) ![output_table.gif](__meta__/output_table.gif)
+
 **PyTorchGeoNodes** enables differentiable procedural graphs in PyTorch that reimplement functionalities of Geometry Nodes in Blender. 
 More exactly, for different node types of Geometry Nodes, we implement corresponding node types with same 
 functionalities using PyTorch, and PyTorch3D in case of geometric operations.
@@ -23,9 +28,9 @@ allows for reasoning about the semantic properties of reconstructed objects, edi
 ---
 ## Updates 
 
-- [ ] (Estimate February/March 2025)  Add integration of Gaussian Splatting into PyTorchGeoNodes. (The paper will be updated soon to explain the details)
-- [x] (Estimate February/March 2025)  Add experiments for fitting objects from ScanNet scenes and data preparation scripts
-- [x] January 2025 - Add genetic algorithm for fitting shape parameters to target 3D objects. (The paper will be updated soon to explain the details)
+- [ ] (Estimate April/Mai 2025)  Add integration of Gaussian Splatting into PyTorchGeoNodes.
+- [x] Add experiments for fitting objects from ScanNet scenes and data preparation scripts
+- [x] January 2025 - Add genetic algorithm for fitting shape parameters to target 3D objects.
 - [x] September 2024 - First release that includes a baseline combining coordinate descent and gradient descent for fitting shape parameters to synthetic scenes
 
 ---
@@ -61,6 +66,8 @@ python demo_optimize_pytorch_geometry_nodes.py --experiment_path demo_outputs/de
 
 ---
 ### `Synthetic Experiments:` Joint discrete and continuous optimization
+
+![output_synth.gif](__meta__/output_synth.gif)
 
 **Step (1)**  Generate a synthetic dataset of scenes with chairs.
 
@@ -105,6 +112,8 @@ python reconstruct_synthetic_objects.py --category chair --dataset_path demo_out
 ---
 ### `ScanNet Experiments:` Joint discrete and continuous optimization
 
+![output.gif](__meta__/output.gif)
+
 ---
 **Step (1)**  Prepare SCANnotate data. Follow the guide in [README.md](scannotate_preprocessing/README.md) for setting up ScanNet and SCANnotate, and for preprocessing data.
 
@@ -126,7 +135,7 @@ python preprocess_dv_values.py --category <OBJ_CAT>
 
 ```
 
-**Step (4)**  Run the following command to reconstruct shape parameters of the chairs using genetic algorithm. Use ```--skip_refinement``` to run without refinement:
+**Step (4)**  Run the following command to reconstruct shape parameters of the chairs using genetic algorithm, for the selected validation scenes. Use ```--skip_refinement``` to run without refinement:
 
 ```bash
 python reconstruct_scannotate_objects.py --category OBJ_CAT --experiment_path scannotate_experiments/ --method genetic
@@ -153,7 +162,7 @@ not be difficult as long as you understand the specific functionalities.
 ---
 ## Contributing
 
-We introduced PyTorchGeoNodes with the goal of creating a framework for developing differentiable shape programs and simplifying their applications in 
+We introduced PyTorchGeoNodes with the goal of creating a framework for developing differentiable shape programs and enabling their applications for 
 tasks in 3D scene understanding. We are encouraging and welcoming contributions and integrations of new functionalities into PyTorchGeoNodes.
 
 ---
@@ -161,8 +170,8 @@ tasks in 3D scene understanding. We are encouraging and welcoming contributions 
 If you find this code useful, please consider citing our paper:
 
 ```
-@article{stekovic2024pytorchgeonodes,
-  author    = {Stekovic, Sinisa and Ainetter, Stefan and D'Urso, Mattia and Fraundorfer, Friedrich},
+@article{stekovic2025pytorchgeonodes,
+  author    = {Stekovic, Sinisa and Artykov, Arslan and Ainetter, Stefan and D'Urso, Mattia and Fraundorfer, Friedrich},
   title     = {PyTorchGeoNodes: Enabling Differentiable Shape Programs for 3D Shape Reconstruction},
   journal   = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
   year      = {2025}

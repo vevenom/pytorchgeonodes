@@ -121,9 +121,6 @@ if __name__ == '__main__':
         else:
             decision_variables = DecisionVariable.generate_dec_vars_from_params_tree(params_tree, device)
 
-        # Create Gaussian Scene Model Instance
-        # gaussian_scene = SceneModel()
-
         scores_dicts = {}
         sample_n_dicts = {}
 

@@ -98,7 +98,6 @@ Masks will be saved to `SCANNOTATE_PATH`:
 │   │    │    ├── all_inst_seg_2d
 │   │    │    ├── mask2d_from_3d
 │   │    │    ├── sam_results_path
-│   │    │    ├── skeleton_vis
 │   │    │    ├── valid_maps
 │   │    ├── ... 
 ```

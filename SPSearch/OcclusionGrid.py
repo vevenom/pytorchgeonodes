@@ -27,7 +27,7 @@ class OcclusionGrid(torch.nn.Module):
         self.occluded_surface_points = torch.zeros((0, 3))
         self.occluding_points_gradients = torch.zeros((0, 3))
         self.floor_plane = torch.tensor([0,1.,0,0])
-        min_y = torch.min(self.other_surface_points[:, 1], dim=0)[0]
+        min_y = torch.min(torch.cat(self.other_surface_points[:, 1], self.surface_points[:, 1], dim=0), dim=0)[0]
         self.floor_plane[-1] = -min_y
 
         self.torch_renderer = Torch3DRenderer()

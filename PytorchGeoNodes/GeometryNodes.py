@@ -405,8 +405,8 @@ class GeometryNodes(torch.nn.Module):
             output_o3d = []
             output = output[b_index]
             for mesh in output:
-                verts_np = mesh.verts.detach().cpu().numpy()[0]
-                faces_np = mesh.faces.detach().cpu().numpy()[0]
+                verts_np = mesh.verts.detach().cpu().numpy()[0].astype(np.float64)
+                faces_np = mesh.faces.detach().cpu().numpy()[0].astype(np.int32)
 
                 o3d_mesh = o3d.geometry.TriangleMesh()
                 o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
@@ -426,11 +426,11 @@ class GeometryNodes(torch.nn.Module):
             output_o3d = []
             output = output[b_index]
             for mesh in output:
-                verts_np = mesh.verts.detach().cpu().numpy()[0]
-                faces_np = mesh.faces.detach().cpu().numpy()[0]
+                verts_np = mesh.verts.detach().cpu().numpy()[0].astype(np.float64)
+                faces_np = mesh.faces.detach().cpu().numpy()[0].astype(np.int32)
 
                 base_prim_ids_np = mesh.verts_base_primitive_ids.detach().cpu().numpy().astype(np.int32)[0]
-                colors_np = colormap[base_prim_ids_np + 1]
+                colors_np = colormap[base_prim_ids_np + 1].astype(np.float64)
 
                 o3d_mesh = o3d.geometry.TriangleMesh()
                 o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)
@@ -453,11 +453,11 @@ class GeometryNodes(torch.nn.Module):
             output_o3d = []
             output = output[b_index]
             for mesh in output:
-                verts_np = mesh.verts.detach().cpu().numpy()[0]
-                faces_np = mesh.faces.detach().cpu().numpy()[0]
+                verts_np = mesh.verts.detach().cpu().numpy()[0].astype(np.float64)
+                faces_np = mesh.faces.detach().cpu().numpy()[0].astype(np.int32)
 
                 ind_prim_ids_np = mesh.verts_individual_primitive_ids.detach().cpu().numpy().astype(np.int32)[0]
-                colors_np = colormap[ind_prim_ids_np + 1]
+                colors_np = colormap[ind_prim_ids_np + 1].astype(np.float64)
 
                 o3d_mesh = o3d.geometry.TriangleMesh()
                 o3d_mesh.vertices = o3d.utility.Vector3dVector(verts_np)

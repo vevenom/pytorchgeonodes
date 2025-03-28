@@ -8,7 +8,7 @@
     "Has Arms": false,
     "Bottom Star": false,
     "Has Middle Support": true,
-    "Backrest Scale": 1.0,
+    "Backrest Scale": 0.8,
     "Backrest Offset Scale": 1.0,
     "Star Rotation": 0.6,
     "Middle Offset 2": 0.243,
@@ -25,7 +25,7 @@
     "Arm Width": 0.112,
     "Arm Thickness": 0.032
   },
-  "rotation_angle_y": 1.712,
+  "rotation_angle_y": 1.612,
   "translation_offset": [
     0.002,
     0.0,

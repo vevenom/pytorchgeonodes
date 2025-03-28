@@ -371,3 +371,65 @@ class ScannotateTarget(Target):
         vis_img = np.concatenate((color_img, rendered_color_overlaid), axis=1)
 
         return vis_img
+
+    def o3d_visualize_part_segmentation(self, input_params_dict, rotation_matrix, translation_offset=None,
+                                       return_geo_node_mesh=False):
+        device = self.device
+
+        _, outputs = self.geometry_nodes.forward(input_params_dict, transform2blender_coords=True)
+        geo_node_obj_mesh = outputs[0][0][0]
+        obj_mesh = Meshes(verts=geo_node_obj_mesh.verts, faces=geo_node_obj_mesh.faces)
+
+        verts = outputs[0][0][0].verts
+        faces = outputs[0][0][0].faces
+
+        transform = Transform3d(device=device)
+
+        if rotation_matrix is not None:
+            transform_rot = Transform3d(matrix=rotation_matrix, device=device)
+            assert rotation_matrix.shape[0] == 1
+            transform = transform.compose(transform_rot)
+        else:
+            assert False, "We are doing experiments with rotations"
+
+        # If object is not at origin
+        bb = obj_mesh.get_bounding_boxes()  # (N, 3, 2)
+
+        bb_center = (bb[:, :, 1] - bb[:, :, 0]) / 2 + bb[:, :, 0]
+
+        verts = verts - bb_center
+
+        verts = transform.transform_points(verts)
+
+        translation = self.obj_center  # - bb_center
+        verts = verts + translation
+
+        if translation_offset is not None:
+            translate = Translate(translation_offset)
+            verts = translate.transform_points(verts)
+
+        base_prim_ids_np = outputs[0][0][0].verts_base_primitive_ids.detach().cpu().numpy().astype(np.int32)[0]
+        colors_np = colormap[base_prim_ids_np + 1]
+
+        scene_pcd = self.scene_pcd
+
+        _, inds, _ = knn_points(scene_pcd, verts)
+
+        import open3d as o3d
+        scene_pcd_np = self.scene_pcd.detach().cpu().numpy()[0].astype(np.float64)
+        scene_pcd_colors_np = colors_np[inds[0,:,0].cpu().numpy()].astype(np.float64)
+        scene_o3d_pcd = o3d.geometry.PointCloud()
+        scene_o3d_pcd.points = o3d.utility.Vector3dVector(scene_pcd_np)
+        scene_o3d_pcd.colors = o3d.utility.Vector3dVector(scene_pcd_colors_np)
+
+        pgn_verts_np = verts.detach().cpu().numpy()[0].astype(np.float64)
+        pgn_faces_np = faces.detach().cpu().numpy()[0].astype(np.int32)
+        pgn_colors_np = colors_np.astype(np.float64)
+        pgn_o3d_mesh = o3d.geometry.TriangleMesh()
+        pgn_o3d_mesh.vertices = o3d.utility.Vector3dVector(pgn_verts_np)
+        pgn_o3d_mesh.triangles = o3d.utility.Vector3iVector(pgn_faces_np)
+        # pgn_o3d_mesh.vertex_colors = o3d.utility.Vector3dVector(pgn_colors_np)
+        pgn_o3d_lineset = o3d.geometry.LineSet.create_from_triangle_mesh(pgn_o3d_mesh)
+
+        o3d.visualization.draw_geometries([scene_o3d_pcd])
+        # o3d.visualization.draw_geometries([scene_o3d_pcd, pgn_o3d_lineset])
