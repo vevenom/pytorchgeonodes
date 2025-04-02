@@ -13,6 +13,12 @@ class ScannotateDatasetMasks(object):
     def __init__(self, scannotate_path):
         self.scannotate_path = scannotate_path
 
+        self.scannet_to_py3d_T = np.zeros((4, 4))
+        self.scannet_to_py3d_T[0, 1] = 1
+        self.scannet_to_py3d_T[1, 2] = 1
+        self.scannet_to_py3d_T[2, 0] = 1
+        self.scannet_to_py3d_T[3, 3] = 1
+
         self.invalid_views_dict = {
             'scene0277_00': {
                 '4': ['740', '744']
@@ -199,8 +205,8 @@ class ScannotateDatasetMasks(object):
                 batched_frame_dict['frame_name'] = [frame_name]
 
 
-        obj_pcd = self.get_obj_pcd(scene_name, obj_idx)
-        other_obj_pcd = self.get_other_objs_pcd(scene_name, obj_idx)
+        obj_pcd = self.get_obj_pcd(scannet_instance, scene_name, obj_idx)
+        other_obj_pcd = self.get_other_objs_pcd(scannet_instance, scene_name, obj_idx)
         batched_frame_dict['object_points'] = obj_pcd.to(device)
         batched_frame_dict['other_object_points'] = other_obj_pcd.to(device)
 
