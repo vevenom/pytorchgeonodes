@@ -205,7 +205,7 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            We propose PyTorchGeoNodes, a differentiable module for reconstructing 3D objects from images using interpretable shape programs. In comparison to traditional CAD model retrieval methods, the use of shape programs for 3D reconstruction allows for reasoning about the semantic properties of reconstructed objects, editing, low memory footprint, etc. However, the utilization of shape programs for 3D scene understanding has been largely neglected in past works. As our main contribution, we enable gradient-based optimization by introducing a module that translates shape programs designed in Blender, for example, into efficient PyTorch code. We also provide a method that relies on PyTorchGeoNodes and is inspired by Monte Carlo Tree Search (MCTS) to jointly optimize discrete and continuous parameters of shape programs and reconstruct 3D objects for input scenes. In our experiments, we apply our algorithm to reconstruct 3D objects in the ScanNet dataset and evaluate our results against CAD model retrieval-based reconstructions. Our experiments indicate that our reconstructions match well the input scenes while enabling semantic reasoning about reconstructed objects.
+            We propose PyTorchGeoNodes, a differentiable module for reconstructing 3D objects and their parameters from images using interpretable shape programs. Unlike traditional CAD model retrieval, shape programs allow reasoning about semantic parameters, editing, and a low memory footprint. Despite their potential, shape programs for 3D scene understanding have been largely overlooked. Our key contribution is enabling gradient-based optimization by parsing shape programs, or more precisely procedural models designed in Blender, into efficient PyTorch code. While there are many possible applications of our PyTochGeoNodes, we show that a combination of PyTorchGeoNodes with genetic algorithm is a method of choice to optimize both discrete and continuous shape program parameters for 3D reconstruction and understanding of 3D object parameters. Our modular framework can be further integrated with other reconstruction algorithms, and we demonstrate one such integration to enable procedural Gaussian splatting. Our experiments on the ScanNet dataset show that our method achieves accurate reconstructions while enabling, until now, unseen level of 3D scene understanding.
           </p>
         </div>
       </div>
@@ -290,7 +290,7 @@
         <!-- Interpolating. -->
         <h3 class="title is-4">Joint discrete and continuous parameter optimization</h3>
         <div class="content has-text-justified">
-          <p>At every iteration, our MCTS-based search algorithm first selects a set of shape parameters and object pose. These are then passed through the differentiable computational graph, parsed by our PyTorchGeoNodes framework for a shape program, that generates a 3D mesh based on the selected shape parameters. Then, we compute the loss that evaluates how well the shape fits the input scene. We further optimize the continuous parameters of our shape program using gradient descent and update the search tree based on this loss.</p>
+          <p>At every iteration, our genetic algorithm-based search generates individuals consisting of sets of shape parameters and object pose. These are then passed through the differentiable computational graph, parsed by our PyTorchGeoNodes framework for a shape program, that generates a 3D mesh based on the selected shape parameters. Then, we compute the loss that evaluates how well the shape fits the input scene. We further optimize the continuous parameters of our shape program using gradient descent and update the individuals based on this loss.</p>
         </div>
         <img src="./static/images/overview.png"
                  class="interpolation-image"
@@ -487,10 +487,10 @@
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
     <pre><code>@article{stekovic2024pytorchgeonodes,
-  author    = {Stekovic, Sinisa and Ainetter, Stefan and D'Urso, Mattia and Fraundorfer, Friedrich and Lepetit, Vincent},
+  author    = {Stekovic, Sinisa and Artykov, Arslan and Ainetter, Stefan and D'Urso, Mattia and Fraundorfer, Friedrich},
   title     = {PyTorchGeoNodes: Enabling Differentiable Shape Programs for 3D Shape Reconstruction},
-  journal   = {arxiv},
-  year      = {2024}
+  journal   = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2025}
 }</code></pre>
   </div>
 </section>
