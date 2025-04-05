@@ -195,12 +195,10 @@
         <source src="./static/videos/my_metaverse.mp4"
                 type="video/mp4">
       </video>
-      <div class="column has-text-centered">
           <p>
             In the teaser video, for an input scene (blue mesh), we reconstruct objects including the corresponding geometry and important semantic parameters (visualized in the red display). These parameters include
             important semantic properties such as type of legs, existance of chair armrest, tabletop type, and also important measurements parameters (in meters). 
           </p>
-      </div>
     </div>
 </section>
 
@@ -243,9 +241,7 @@
           <img src="./static/images/blender2pytorchgeonodes.png"
                  class="interpolation-image"
                  alt="blender2pytorchgeonodes image."/>
-            <div class="column has-text-centered">
-              <p>In the visualization above we show the computational graph designed and visualized in Blender using Geometry Nodes feature. Underneath, we show how we abstract the different nodes using PyTorch tensors and PyTorch3D meshes. The input node takes input parameters, here {Width: 0.5, Dividing Board Thickness: 0.04, Height: 0.6, Number of Dividing Boards: 5, Board Thickness: 0.04} and feeds them to a series of operations.  The blue nodes are arithmetic and concatenation nodes, which transform input parameters and feed the results to geometry nodes, in green. In this example, we generate a cuboid mesh and instantiate a line of points which generates the final geometry for dividing boards. In practice, this shape program is part of a larger shape program for modeling cabinets.</p>
-            </div>
+          <p>In the visualization above we show the computational graph designed and visualized in Blender using Geometry Nodes feature. Underneath, we show how we abstract the different nodes using PyTorch tensors and PyTorch3D meshes. The input node takes input parameters, here {Width: 0.5, Dividing Board Thickness: 0.04, Height: 0.6, Number of Dividing Boards: 5, Board Thickness: 0.04} and feeds them to a series of operations.  The blue nodes are arithmetic and concatenation nodes, which transform input parameters and feed the results to geometry nodes, in green. In this example, we generate a cuboid mesh and instantiate a line of points which generates the final geometry for dividing boards. In practice, this shape program is part of a larger shape program for modeling cabinets.</p>
         </div>
       </div>
   </div>
