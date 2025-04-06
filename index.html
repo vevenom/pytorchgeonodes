@@ -466,6 +466,36 @@
     </div>
   </div>
 
+  <section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Search. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <!-- Interpolating. -->
+        <h3 class="title is-4">[Extension] PyTorchGeoNodes for procedural Gaussian splatting (Implementation to be released soon)</h3>
+        <img src="./static/images/procedural_gaussians.png"
+                 class="interpolation-image"
+                 alt="Reconstructed Gaussians."/>
+        </br>
+        <div class="content has-text-justified">
+          <p> We enable procedural Gaussian splats within PyTorchGeoNodes by extending the nodes that create mesh primitives to also create trainable Gaussian parameters. The key difference with regular Gaussian Splatting is that our Gaussians are constrained by the
+            procedural model which enables interesting properties such as ' cloning' of Gaussians: the Gaussians sampled on 'cloned' base primitives are tied together. For example, as the armrests of sofa 'clones' of the same base
+            primitives, the occluded part of an armrest can still be recovered if it is visible for another armrest. </p>
+        </div>
+        <video id="gaussianediting" height="10%" autoplay muted loop playsinline>
+        <source src="./static/videos/my_gaussians_editing.webm"
+                type="video/mp4">
+        </video>
+        <div class="content has-text-justified">
+          <p> In the video, we show how reconstructed Gaussians can be edited by modifying parameters of the shape program. As our reconstructions are procedural, all changes in parameter space are propagated directly to the final Gaussians.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
       <!-- Concurrent Work. -->
     <div class="columns is-centered">
       <div class="column is-full-width">
