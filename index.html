@@ -463,23 +463,28 @@
         <br/>
         <!--/ Examples. -->
       </div>
-      <img src="./static/images/seg_pcds.png"
-                 class="interpolation-image"
-                 alt="Segmented partial point clouds."/>
-      <div class="content has-text-justified">
-          <p>Our reconstructions can be used for segmenting semantic parts in partial point clouds. In this application, graph of PyTorchGeoNodes directly assigns points in the point cloud to base primitives in our
-            procedural graphs based on simple chamfer distance.</p>
-      </div>
     </div>
   </div>
 
   <section class="section">
   <div class="container is-max-desktop">
 
-    <!-- Search. -->
+    <!-- Applications. -->
     <div class="columns is-centered">
       <div class="column is-full-width">
-        <!-- Interpolating. -->
+
+        <!-- PCD Segmentation. -->
+        <h3 class="title is-4">Semantic parts segmentation</h3>
+        <img src="./static/images/seg_pcds.png"
+                 height="30%"
+                 class="interpolation-image"
+                 alt="Segmented partial point clouds."/>
+        </br>
+        <div class="content has-text-justified">
+            <p>Our reconstructions can be used for segmenting semantic parts in partial point clouds. In this application, graph of PyTorchGeoNodes directly assigns points in the point cloud to base primitives in our
+              procedural graphs based on simple chamfer distance.</p>
+        </div>
+        <!-- Gaussians. -->
         <h3 class="title is-4">[Extension] Procedural Gaussian splatting</h3>
         <img src="./static/images/procedural_gaussians.png"
                  class="interpolation-image"
