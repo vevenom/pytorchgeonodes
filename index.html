@@ -474,9 +474,9 @@
       <div class="column is-full-width">
 
         <!-- PCD Segmentation. -->
-        <h3 class="title is-4">Semantic parts segmentation</h3>
+        <h2 class="title is-4">Semantic parts segmentation</h2>
         <img src="./static/images/seg_pcds.png"
-                 height="30%"
+                 height="20%"
                  class="interpolation-image"
                  alt="Segmented partial point clouds."/>
         </br>
@@ -485,15 +485,15 @@
               procedural graphs based on simple chamfer distance.</p>
         </div>
         <!-- Gaussians. -->
-        <h3 class="title is-4">[Extension] Procedural Gaussian splatting</h3>
+        <h2 class="title is-4"> Procedural Gaussian splatting</h2>
         <img src="./static/images/procedural_gaussians.png"
                  class="interpolation-image"
                  alt="Reconstructed Gaussians."/>
         </br>
         <div class="content has-text-justified">
-          <p> We enable procedural Gaussian splats within PyTorchGeoNodes by extending the nodes that create mesh primitives to also create trainable Gaussian parameters. The key difference with regular Gaussian Splatting is that our Gaussians are constrained by the
-            procedural model which enables interesting properties such as ' cloning' of Gaussians: the Gaussians sampled on 'cloned' base primitives are tied together. For example, as the armrests of sofa 'clones' of the same base
-            primitives, the occluded part of an armrest can still be recovered if it is visible for another armrest. (Implementation to be released soon) </p>
+          <p> We enable procedural Gaussian splats within PyTorchGeoNodes by extending the nodes that create mesh primitives to also create trainable Gaussian parameters. The key difference to regular Gaussian Splatting is that our Gaussians
+            are constrained by the procedural model that enables interesting properties such as ' cloning' of Gaussians: the Gaussians sampled on 'cloned' base primitives are tied together. For example, as the armrests of sofa 'clones'
+            of the same base primitives, the occluded part of an armrest can still be recovered if it is visible for another armrest. (Implementation to be released soon) </p>
         </div>
         <video id="gaussianediting" height="30%" autoplay muted loop playsinline>
         <source src="./static/videos/my_gaussians_editing.webm"
