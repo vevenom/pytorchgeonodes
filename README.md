@@ -150,6 +150,14 @@ python reconstruct_scannotate_objects.py --category OBJ_CAT --experiment_path sc
 python evaluate_scannotate_sp_parameters.py --experiments_path scannotate_experiments/ --experiment_name EXP_NAME --solution_name 0best_0_solution.json 
 ```
 
+### `ScanNet Experiments:` PyTorchGeoNodes for procedural Gaussian Splatting
+
+**Step (0)** Switch to `procedural_gs` branch and follow the README.md from there:
+
+```bash
+git checkout procedural_gs
+```
+
 ---
 ## Notes on Designing your Own Shape Programs
 
