@@ -1,0 +1,35 @@
+gaussian_primitive:
+  n_gaussians_per_surface_triangle: 10 # Barycentric implemented only for values 4,7,10
+  flat_gaussians: True
+  init_gaussian_thickness: 0.001
+  spherical_harmonics_degree: null # null if RGB
+  surface_triangle_circle_radius: 0.2
+  init_opacity: 0.95
+
+  optimize_verts_offsets: True
+  optimize_verts_colors_offsets: False
+  optimize_means_offsets: False
+  optimize_scales_offsets: True
+  optimize_scale_thickness_offsets: True
+  optimize_complex_offsets: True
+  optimize_colors_offsets: True
+  optimize_opacities_offsets: False
+
+bgd_gaussians:
+  use_bgd_gaussians: True
+  optimize_bgd: True
+  init_opacity: 0.95
+  bgd_gaussians_init_scale: 0.005
+
+losses:
+  bgd_loss_w: 0.5
+  rgb_loss_w: 1.0
+  depth_loss_w: 0.1
+  means_offsets_loss_w: 1.0
+  verts_offsets_loss_w: 100.0
+  scales_offsets_loss_w: 10.0
+  colors_offsets_loss_w: 1.0
+  opacity_loss_w: 0.0
+  loss_3d_gs_sampling_scale: 10.0
+  loss_3d_cd_w: 0.1
+  loss_3d_grid_w: 0.0
