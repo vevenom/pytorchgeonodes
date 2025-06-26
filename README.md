@@ -175,6 +175,71 @@ python evaluate_scannotate_sp_parameters.py --experiments_path scannotate_experi
 git checkout procedural_gs
 ```
 
+### `ScanNet Experiments:` PyTorchGeoNodes for procedural Gaussian Splatting
+
+**Step (0)** Switch to `procedural_gs` branch and follow the README.md from there:
+
+```bash
+git checkout procedural_gs
+```
+
+**Step (0)** Note that the implementation of procedural Gaussian Splatting might not be up-to-date with the main branch.
+
+**Step (0)** Install additional modules:
+
+```bash
+pip install gsplat==1.4
+pip install lpips
+pip install pytorch_msssim
+pip install tensorboard==2.18
+```
+
+**Step (1)** Make sure to setup paths as in previous section.  
+
+**Step (2)** Run the following command for procedural Gaussian splatting with PyTorchGeoNodes:
+
+```bash
+python run_pgn_gs_scannotate.py --category OBJ_CAT --annotations_path PATH_TO_SHAPE_PARAMS --scene_name SCENE_NAME --obj_name OBJ_NAME --annotations_file_name ANN_FILE_NAME --experiment_path EXP_PATH
+```
+
+**(Example)** Running with g.t. shape parameters on an example demo scene (you can also run with reconstructed parameters):
+
+```bash
+python run_pgn_gs_scannotate.py --category sofa --annotations_path sp_gt_annotations/sofa --scene_name scene0025_00 --obj_name obj_2 --annotations_file_name sp_params.json --experiment_path pgn_gs_experiments/
+```
+
+or:
+
+```bash
+python run_pgn_gs_scannotate.py --category chair --annotations_path sp_gt_annotations/chair --scene_name scene0011_00 --obj_name obj_3 --annotations_file_name sp_params.json --experiment_path pgn_gs_experiments/
+```
+
+**Step (4)** Visualize progress with tensorboard:
+
+```bash
+tensorboard --logdir PATH_TO_GS_RUN/gaussian_training_logs
+```
+
+### Editing procedural Gaussians with PyTorchGeoNodes
+
+**Step (0)** You will need geany (or modify python script to use a different editor) for this demo:
+
+```bash
+sudo apt install geany
+```
+
+**Step (1)** After running procedural Gaussian splatting, run the demo:
+
+```bash
+python demo_modify_gaussians_via_params.py --category OBJ_CAT --annotations_path PATH_TO_SHAPE_PARAMS --scene_name SCENE_NAME --obj_name OBJ_NAME --annotations_file_name ANN_FILE_NAME --experiment_path EXP_PATH
+```
+
+For example:
+```bash
+python demo_modify_gaussians_via_params.py --category sofa --annotations_path sp_gt_annotations/sofa --scene_name scene0025_00 --obj_name obj_2 --annotations_file_name sp_params.json --experiment_path pgn_gs_experiments/
+```
+
+
 ---
 ## Notes on Designing your Own Shape Programs
 
