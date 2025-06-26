@@ -175,14 +175,6 @@ python evaluate_scannotate_sp_parameters.py --experiments_path scannotate_experi
 git checkout procedural_gs
 ```
 
-### `ScanNet Experiments:` PyTorchGeoNodes for procedural Gaussian Splatting
-
-**Step (0)** Switch to `procedural_gs` branch and follow the README.md from there:
-
-```bash
-git checkout procedural_gs
-```
-
 **Step (0)** Note that the implementation of procedural Gaussian Splatting might not be up-to-date with the main branch.
 
 **Step (0)** Install additional modules:
@@ -221,6 +213,8 @@ tensorboard --logdir PATH_TO_GS_RUN/gaussian_training_logs
 ```
 
 ### Editing procedural Gaussians with PyTorchGeoNodes
+
+![proc_gauss_editing](__meta__/proc_gauss_editing.gif)
 
 **Step (0)** You will need geany (or modify python script to use a different editor) for this demo:
 
