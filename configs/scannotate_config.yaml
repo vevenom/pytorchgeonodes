@@ -1,4 +1,4 @@
-scannet_processed_path: '/home/sinisa/Projects/SPforSU/ScanNet/data/scans/'
-scannet_ply_path: '/home/sinisa/Projects/SPforSU/ScanNet/data/scans/'
-scannotate_dataset_path: '/home/sinisa/Projects/SPforSU/ScanNet/ScannotateDataset'
-scannotate_masks_path: '/home/sinisa/Projects/SPforSU/ScanNet/ScannotateDataset/Scannotate_2d_masks'
+scannet_processed_path: '/path/to/ScanNet/data/scans/'
+scannet_ply_path: '/path/to/ScanNet/data/scans/'
+scannotate_dataset_path: '/path/to/ScannotateDataset'
+scannotate_masks_path: '/path/to/ScannotateDataset/Scannotate_2d_masks'
