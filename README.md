@@ -47,7 +47,7 @@ conda activate pytorchgeonodes
 **Step (2)** Adjust paths config in `configs/general_config.yaml`:
 ```yaml
 experiments_path_base: '<Base-Path-To-Experiments>'
-processed_data_path: '<Folder-Where-Processed-Decision-Variables-Are-Saved>'
+processed_data_path: '<Path-Where-Processed-Decision-Variables-Are-or-Will-Be-Saved>'
 ```
 
 ---
@@ -115,7 +115,24 @@ python reconstruct_synthetic_objects.py --category chair --dataset_name syntheti
 ![output.gif](__meta__/output.gif)
 
 ---
-**Step (1)**  Prepare SCANnotate data. Follow the guide in [README.md](scannotate_preprocessing/README.md) for setting up ScanNet and SCANnotate, and for preprocessing data.
+
+**Step (1a)** We provide [two processed demo scenes](https://drive.google.com/file/d/1xzR3a3U7GoJleaTve4oiIJorFk-9W8hF/view?usp=drive_link) 
+to get you started. Note that by downloading this file you agree to ScanNet terms of use, and to ScanNet and SCANnotate licenses. 
+The folder structure is as follow:
+
+```text
+|-- DEMO_PGN_DATA
+  |-- scannet_scans # PATH-TO-SCANNET-SCANS, 
+  |-- scannotate_dataset # PATH-TO-SCANNOTATE-SCENES
+    |-- annotations
+    |-- Scannotate_2d_masks # PATH-TO-SCANNOTATE-MASKS-SCENES
+    
+```
+
+
+**Step (1b)**  If you want to experiment with more SCANnotate data, you need to preprocess the dataset firs. 
+Follow the guide in [README.md](scannotate_preprocessing/README.md) for setting up ScanNet and SCANnotate, and for preprocessing data.
+
 
 ---
 **Step (2)**  Adjust paths in `configs/scannotate_config.yaml`:

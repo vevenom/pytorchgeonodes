@@ -22,5 +22,7 @@ dependencies:
     - open3d==0.18.0
     - opencv-python==4.10.0.84
     - ordered-set==4.1.0
+    - networkx
+    - numpy-quaternion
 
 

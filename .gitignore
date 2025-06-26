@@ -11,3 +11,4 @@ output*
 reconstruct_scannotate_objects_ignore_annotations.py
 valid_scenes/
 visualize_parameter_trackbar_progress.py
+configs/scannotate_config.yaml
