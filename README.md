@@ -169,6 +169,8 @@ python evaluate_scannotate_sp_parameters.py --experiments_path scannotate_experi
 
 ### `ScanNet Experiments:` PyTorchGeoNodes for procedural Gaussian Splatting
 
+![proc_gauss_editing](https://github.com/vevenom/pytorchgeonodes/blob/procedural_gs/__meta__/proc_gauss_editing.gif)
+
 **Step (0)** Switch to `procedural_gs` branch and follow the README.md from there:
 
 ```bash
